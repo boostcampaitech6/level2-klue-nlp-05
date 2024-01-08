@@ -1,17 +1,17 @@
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
-from load_data import *
-import pandas as pd
-import torch
-import torch.nn.functional as F
-
-import pickle as pickle
-import numpy as np
-import argparse
+from dataset_utils import load_test_dataset, num_to_label
+from train import set_seed
+from datasets import RE_Dataset
 from tqdm import tqdm
 
-from train import set_seed
-from label_num import num_to_label
+import torch.nn.functional as F
+import pandas as pd
+import torch
+
+import numpy as np
+import argparse
+
 
 def inference(model, tokenized_sent, device):
   """
@@ -40,30 +40,22 @@ def inference(model, tokenized_sent, device):
   return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
 
 
-def load_test_dataset(dataset_dir, tokenizer):
-  """
-    test dataset을 불러온 후,
-    tokenizing 합니다.
-  """
-  test_dataset = load_data(dataset_dir)
-  test_label = list(map(int,test_dataset['label'].values))
-  # tokenizing dataset
-  if main.Tokenizer_NAME.split('-')[0] == 'xlm':
-    tokenized_test = tokenized_dataset_xlm(test_dataset, tokenizer)
-  else:
-    tokenized_test = tokenized_dataset(test_dataset, tokenizer)
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--config", "-c", type=str, default="base_config")
+  parser.add_argument('--model_dir', "-m", type=str, default="./best_model")
 
-  return test_dataset['id'], tokenized_test, test_label
-
-
-def main(args):
+  args, _ = parser.parse_known_args()
+  conf = OmegaConf.load(f"./config/{args.config}.yaml")
+  print(args)
+  
   set_seed(42)
   """
     주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
   """
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   # load tokenizer
-  Tokenizer_NAME = "klue/bert-base"
+  Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
 
   ## load my model
@@ -73,7 +65,7 @@ def main(args):
   model.to(device)
 
   ## load test datset
-  test_dataset_dir = "../dataset/test/test_data.csv"
+  test_dataset_dir = conf.path.test_path
   test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer)
   Re_test_dataset = RE_Dataset(test_dataset ,test_label)
 
@@ -89,12 +81,4 @@ def main(args):
   output.to_csv('./prediction/submission.csv', index=False) # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
   #### 필수!! ##############################################
   print('---- Finish! ----')
-
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
   
-  # model dir
-  parser.add_argument('--model_dir', type=str, default="./best_model")
-  args = parser.parse_args()
-  print(args)
-  main(args)

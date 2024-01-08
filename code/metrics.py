@@ -1,7 +1,7 @@
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
+
 import numpy as np
 import sklearn
-
 
 def klue_re_micro_f1(preds, labels):
     """KLUE-RE micro f1 (except no_relation)"""
@@ -21,7 +21,6 @@ def klue_re_micro_f1(preds, labels):
     label_indices.remove(no_relation_label_idx)
     return sklearn.metrics.f1_score(labels, preds, average="micro", labels=label_indices) * 100.0
 
-
 def klue_re_auprc(probs, labels):
     """KLUE-RE AUPRC (with no_relation)"""
     labels = np.eye(30)[labels]
@@ -33,7 +32,6 @@ def klue_re_auprc(probs, labels):
         precision, recall, _ = sklearn.metrics.precision_recall_curve(targets_c, preds_c)
         score[c] = sklearn.metrics.auc(recall, precision)
     return np.average(score) * 100.0
-
 
 def compute_metrics(pred):
   """ validation을 위한 metrics function """
