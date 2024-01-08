@@ -22,10 +22,10 @@ def add_typed_entity_marker_original(file_path):
 
         new_sentence = ''
 
-        curr_entity_tokens = [f'<S:{subject_entity["type"]}>',
-                              f'</S:{subject_entity["type"]}>',
-                              f'<O:{object_entity["type"]}>',
-                              f'</O:{object_entity["type"]}>']
+        curr_entity_tokens = [f' <S:{subject_entity["type"]}> ',
+                              f' </S:{subject_entity["type"]}> ',
+                              f' <O:{object_entity["type"]}> ',
+                              f' </O:{object_entity["type"]}> ']
         entity_tokens.update(curr_entity_tokens)
 
         if subject_entity['start_idx'] < object_entity['start_idx']:
