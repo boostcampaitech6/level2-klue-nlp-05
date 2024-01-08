@@ -39,19 +39,25 @@ if __name__ == '__main__':
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = load_data(conf.path.train_path)
-  # dev_dataset = load_data(conf.path.dev_path) # validation용 데이터는 따로 만드셔야 합니다.
+  train_dataset = load_data("../dataset/train/train.csv")
+  dev_dataset = load_data("../dataset/train/dev.csv") # validation용 데이터는 따로 만드셔야 합니다.
 
   train_label = label_to_num(train_dataset['label'].values)
-  # dev_label = label_to_num(dev_dataset['label'].values)
+  dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
-  tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-  # tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+  if MODEL_NAME.split('-')[0] == 'xlm':
+    tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
+    tokenized_dev = tokenized_dataset_xlm(dev_dataset, tokenizer)
+  else:
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  # RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
+  
+  # Split train dataset into train, valid.
+  RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
