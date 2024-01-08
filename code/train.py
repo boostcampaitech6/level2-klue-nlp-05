@@ -40,18 +40,14 @@ if __name__ == '__main__':
 
   # load dataset
   train_dataset = load_data("../dataset/train/train.csv")
-  dev_dataset = load_data("../dataset/train/dev.csv") # validation용 데이터는 따로 만드셔야 합니다.
 
   train_label = label_to_num(train_dataset['label'].values)
-  dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
   if MODEL_NAME.split('-')[0] == 'xlm':
     tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset_xlm(dev_dataset, tokenizer)
   else:
     tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
