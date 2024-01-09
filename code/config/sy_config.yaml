@@ -1,0 +1,28 @@
+path:
+  train_path: ../dataset/train/train_final.csv
+  dev_path: ../dataset/train/train_final.csv
+  test_path: ../dataset/test/test_final.csv
+
+model:
+  model_name: klue/bert-base
+
+train:
+  epochs: 20
+  batch_size: 64
+  learning_rate: 2e-05
+  save_steps: 500
+  warmup_steps: 500
+  weight_decay: 0.01
+  logging_steps: 100
+  eval_steps: 500
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1e-8
+  lr_scheduler_type: linear
+
+utils:
+  seed: 42
+  top_k : 5
+
+wandb:
+  project_name: level2_RE
