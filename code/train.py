@@ -78,7 +78,6 @@ if __name__ == '__main__':
     per_device_train_batch_size=conf.train.batch_size,  # batch size per device during training
     per_device_eval_batch_size=conf.train.batch_size,   # batch size for evaluation
     warmup_steps=conf.train.warmup_steps,                # number of warmup steps for learning rate scheduler
-    weight_decay=conf.train.weight_decay,               # strength of weight decay
     logging_dir='./logs',            # directory for storing logs
     logging_steps=conf.train.logging_steps,              # log saving step.
     evaluation_strategy='steps', # evaluation strategy to adopt during training
@@ -88,13 +87,17 @@ if __name__ == '__main__':
     eval_steps=conf.train.eval_steps,            # evaluation step.
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
-    report_to="wandb"
+    report_to="wandb",
+    adam_beta1=conf.train.adam_beta1,
+    adam_beta2=conf.train.adam_beta2,
+    adam_epsilon=conf.train.adam_epsilon,
+    lr_scheduler_type=conf.train.lr_scheduler_type
   )
   trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
-    eval_dataset=RE_train_dataset,
+    eval_dataset=RE_dev_dataset,
     compute_metrics=compute_metrics
   )
 
