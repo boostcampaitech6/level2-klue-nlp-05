@@ -59,18 +59,9 @@ if __name__ == '__main__':
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
   
-  # add special token
-  if conf.use_entity_marker:
-    entity_list = ['ORG', 'PER', 'POH', 'DAT', 'LOC', 'NOH']
-    tokenizer.add_special_tokens({'additional_special_tokens': entity_list})
-
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
   model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
-  
-  # model embeddings resize
-  if conf.use_entity_marker:
-    model.resize_token_embeddings(len(tokenizer))
   
   model.parameters
   model.to(device)

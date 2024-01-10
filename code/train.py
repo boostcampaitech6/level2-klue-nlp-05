@@ -35,14 +35,9 @@ if __name__ == '__main__':
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-  
-  # add special token
-  if conf.use_entity_marker:
-    entity_list = ['ORG', 'PER', 'POH', 'DAT', 'LOC', 'NOH']
-    tokenizer.add_special_tokens({'additional_special_tokens': entity_list})
 
   # load dataset
-  train_dataset = load_data("../dataset/train/train.csv")
+  train_dataset = load_data("../dataset/train/train.csv", train=True)
 
   train_label = label_to_num(train_dataset['label'].values)
 
@@ -66,10 +61,6 @@ if __name__ == '__main__':
   model_config.num_labels = 30
 
   model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
-  
-  # model embeddings resize
-  if conf.use_entity_marker:
-    model.resize_token_embeddings(len(tokenizer))
     
   print(model.config)
   model.parameters

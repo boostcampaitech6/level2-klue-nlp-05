@@ -1,7 +1,7 @@
 path:
   train_path: ../dataset/train/train_final.csv
   dev_path: ../dataset/train/train_final.csv
-  test_path: ../dataset/test/test_final.csv
+  test_path: ../dataset/test/test_data.csv
 
 model:
   model_name: klue/bert-base
@@ -22,7 +22,7 @@ utils:
 
 wandb:
   project_name: level2_RE
-  version_name: 0.1.0 (baseline, dup_sentence_preprocessing, Entity_Marker)
+  version_name: 1.1.1 (0.1.0 수정)
 
 use_entity_marker: True
 

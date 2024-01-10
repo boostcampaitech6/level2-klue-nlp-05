@@ -63,7 +63,7 @@ def tokenized_dataset_xlm(dataset, tokenizer):
       )
   return tokenized_sentences
 
-def load_data(dataset_dir):
+def load_data(dataset_dir, train=False):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
   pd_dataset = pd.read_csv(dataset_dir)
   
@@ -76,7 +76,7 @@ def load_data(dataset_dir):
   dataset = preprocessing(pd_dataset)
   
   # use duplicated sentence preprocessing
-  if conf.dup_preprocessing:
+  if conf.dup_preprocessing & train:
     outlier_sentence=[18458,6749,8364,22258,10202,277,10320,25094]
     pd_dataset = pd_dataset.drop(outlier_sentence)
     pd_dataset.drop_duplicates(['sentence', 'subject_word', 'object_word'], keep='first', inplace=True)
