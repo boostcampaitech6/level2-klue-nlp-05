@@ -33,6 +33,32 @@ def tokenized_dataset(dataset, tokenizer):
       )
   return tokenized_sentences
 
+def tokenized_dataset_xlm(dataset, tokenizer):
+  """dataset을 주어진 tokenizer로 tokenize하는 함수(xlm only)
+
+  Args:
+      dataset (DataFrame): 변곧내(변수이름이 곧 내용)
+      tokenizer (Any): 사용하고자 하는 tokenizer
+
+  Returns:
+      Any: tokenized된 문장들
+  """
+  concat_entity = []
+  for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
+    temp = ''
+    temp = e01 + '</s></s>' + e02
+    concat_entity.append(temp)
+  tokenized_sentences = tokenizer(
+      concat_entity,
+      list(dataset['sentence']),
+      return_tensors="pt",
+      padding=True,
+      truncation=True,
+      max_length=256,
+      add_special_tokens=True,
+      )
+  return tokenized_sentences
+
 def load_data(dataset_dir):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
   pd_dataset = pd.read_csv(dataset_dir)
