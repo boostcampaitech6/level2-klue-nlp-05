@@ -2,6 +2,7 @@ import pickle as pickle
 import pandas as pd
 import ast
 
+
 def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
   subject_entity = []
