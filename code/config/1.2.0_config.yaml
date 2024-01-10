@@ -1,0 +1,26 @@
+path:
+  train_path: ../dataset/train/train_final.csv
+  dev_path: ../dataset/train/train_final.csv
+  test_path: ../dataset/test/test_final.csv
+
+model:
+  model_name: klue/bert-base
+  last_dense_layer_dropout_prob: 0.1
+
+train:
+  epochs: 20
+  batch_size: 16
+  learning_rate: 5e-5
+  save_steps: 500
+  warmup_steps: 500
+  weight_decay: 0.01
+  logging_steps: 100
+  eval_steps: 500
+
+utils:
+  seed: 42
+  top_k : 5
+
+wandb:
+  project_name: level2_RE
+
