@@ -104,8 +104,7 @@ if __name__ == '__main__':
         test_id_final = pd.concat([test_id_final, test_id], axis=0, ignore_index=True)
         pred_answer_final += pred_answer
         output_prob_final += output_prob
-
-
+    
     ## make csv file with predicted answer
     #########################################################
     # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
