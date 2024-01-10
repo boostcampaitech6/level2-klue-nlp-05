@@ -4,17 +4,17 @@ from transformers import AutoModel
 from torch.cuda.amp import autocast
 
 class Custom_Model(nn.Module):
-    def __init__(self, model_name, config):
+    def __init__(self, args, config):
         super().__init__()
         self.args = args
-        self.encoder = AutoModel.from_pretrained(model_name, config=config)
+        self.encoder = AutoModel.from_pretrained(args.model.model_name, config=config)
         hidden_size = config.hidden_size
         self.loss_fnt = nn.CrossEntropyLoss()
         self.classifier = nn.Sequential(
             nn.Linear(2 * hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Dropout(p=args.dropout_prob),
-            nn.Linear(hidden_size, args.num_class)
+            nn.Dropout(p=args.model.last_dense_layer_dropout_prob),
+            nn.Linear(hidden_size, 30)
         )
 
     @autocast()

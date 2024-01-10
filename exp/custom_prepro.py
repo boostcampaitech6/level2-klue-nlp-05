@@ -17,7 +17,6 @@ class Processor:
         
 
     def tokenize(self, sentence, subj_type, obj_type, ss, se, os, oe):
-        
         sents = []
         subj_type , obj_type = f"[{subj_type}]", f"[{obj_type}]"
         tokens = self.tokenizer.tokenize(sentence)
