@@ -86,15 +86,15 @@ def add_typed_entity_marker_punct(file_path):
 
         if subject_entity['start_idx'] < object_entity['start_idx']:
             new_sentence += sentence[ :subject_entity['start_idx'] ]
-            new_sentence += f"@*{curr_entity_tokens[0]}*{sentence[subject_entity['start_idx']:subject_entity['end_idx']+1]}@"
+            new_sentence += f"@ * {curr_entity_tokens[0]} * {sentence[subject_entity['start_idx']:subject_entity['end_idx']+1]} @"
             new_sentence += sentence[subject_entity['end_idx']+1:object_entity['start_idx']]
-            new_sentence += f"&^{curr_entity_tokens[1]}^{sentence[object_entity['start_idx']:object_entity['end_idx']+1]}&"
+            new_sentence += f"& ^ {curr_entity_tokens[1]} ^ {sentence[object_entity['start_idx']:object_entity['end_idx']+1]} &"
             new_sentence += sentence[object_entity['end_idx']+1:]
         else:
             new_sentence += sentence[ :object_entity['start_idx'] ]
-            new_sentence += f"&^{curr_entity_tokens[1]}^{sentence[object_entity['start_idx']:object_entity['end_idx']+1]}&"
+            new_sentence += f"& ^ {curr_entity_tokens[1]} ^ {sentence[object_entity['start_idx']:object_entity['end_idx']+1]} &"
             new_sentence += sentence[object_entity['end_idx']+1:subject_entity['start_idx']]
-            new_sentence += f"@*{curr_entity_tokens[0]}*{sentence[subject_entity['start_idx']:subject_entity['end_idx']+1]}@"
+            new_sentence += f"@ * {curr_entity_tokens[0]} * {sentence[subject_entity['start_idx']:subject_entity['end_idx']+1]} @"
             new_sentence += sentence[subject_entity['end_idx']+1:]
         result.append(new_sentence)
     

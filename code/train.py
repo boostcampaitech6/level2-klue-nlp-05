@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset
+from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
 from datasets import RE_Dataset
 from metrics import compute_metrics
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = load_data("../dataset/train/train.csv")
+  train_dataset = load_data(conf.path.train_path)
 
   train_label = label_to_num(train_dataset['label'].values)
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
   
   print(device)
   # setting model hyperparameter
-  model_config =  AutoConfig.from_pretrained(MODEL_NAME)
+  model_config = AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
   model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
@@ -88,13 +88,14 @@ if __name__ == '__main__':
     eval_steps=conf.train.eval_steps,            # evaluation step.
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
-    report_to="wandb"
+    report_to="wandb",
+    fp16=conf.fp16
   )
   trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
-    eval_dataset=RE_train_dataset,
+    eval_dataset=RE_dev_dataset,
     compute_metrics=compute_metrics
   )
 

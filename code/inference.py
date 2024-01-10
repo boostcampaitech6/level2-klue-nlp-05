@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
 from dataset_utils import load_test_dataset, num_to_label
+from omegaconf import OmegaConf
 from train import set_seed
 from datasets import RE_Dataset
 from tqdm import tqdm
