@@ -23,15 +23,17 @@ class Processor:
         for i_t, token in enumerate(tokens):
             if i_t == ss:
                 new_ss = len(sents)
-                sents.extend(['@'] + ['*'] + subj_type + ['*'] + [token])
+                sents.extend(['@'] + ['*'] + [subj_type] + ['*'])
             if i_t == se:
-                sents.extend([token] + ['@'])
+                sents.extend(['@'])
             if i_t == os:
                 new_os = len(sents)
-                sents.extend(["#"] + ['^'] + obj_type + ['^'] + [token])
+                sents.extend(["#"] + ['^'] + [obj_type] + ['^'])
             if i_t == oe:
-                sents.extend([token] + ['#'])
-        sents = sents[:self.args.max_seq_length - 2]
+                sents.extend(['#'])
+            sents.append(token)
+            print(sents)
+        sents = sents[:self.args.model.max_seq_length - 2]
         input_ids = self.tokenizer.convert_tokens_to_ids(sents)
         input_ids = self.tokenizer.build_inputs_with_special_tokens(input_ids)
         
@@ -42,13 +44,10 @@ class Processor:
         with open(file_in, "r") as fh:
             data = pd.read_csv(fh)
 
-        for d in tqdm(data):
-            ss, se = d['subject_start_idx'], d['subject_end_idx']
-            os, oe = d['object_start_idx'], d['object_end_idx']
-
-            sentence = d['sentence']
-
-            input_ids, new_ss, new_os = self.tokenize(sentence, d['subject_type'], d['object_type'], ss, se, os, oe)
+        for _, d in tqdm(data.iterrows()):
+            ss, se = int(d['subject_start_idx']), int(d['subject_end_idx'])
+            os, oe = int(d['object_start_idx']), int(d['object_end_idx'])
+            input_ids, new_ss, new_os = self.tokenize(d['sentence'], d['subject_type'], d['object_type'], ss, se, os, oe)
             rel = self.LABEL_TO_ID[d['label']]
 
             feature = {

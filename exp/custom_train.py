@@ -1,13 +1,12 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModel, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset
+from dataset_utils import label_to_num
 from datasets import RE_Dataset
 from metrics import compute_metrics
 from custom_model import Custom_Model
 from custom_prepro import Processor
-
-
 import numpy as np
+import pandas as pd
 import argparse
 import random
 import torch
@@ -27,10 +26,10 @@ def set_seed(seed:int = 42):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="base_config")
+  parser.add_argument("--config", "-c", type=str, default="1.2.0_config")
 
   args, _ = parser.parse_known_args()
-  conf = OmegaConf.load(f"./config/{args.config}.yaml")
+  conf = OmegaConf.load(f"../code/config/{args.config}.yaml")
 
   set_seed(42)
 
@@ -42,11 +41,11 @@ if __name__ == '__main__':
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = load_data("../dataset/train/train_final.csv")
+  train_dataset = pd.read_csv("../dataset/train/train_final.csv")
   train_label = label_to_num(train_dataset['label'].values)
 
   # tokenizing dataset
-  tokenized_train = Processor(conf, tokenizer)
+  tokenized_train = Processor(conf, tokenizer).read("../dataset/train/train_final.csv")
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -62,8 +61,6 @@ if __name__ == '__main__':
 
   model = Custom_Model(conf, config=model_config)
   model.encoder.resize_token_embeddings(len(tokenizer))
-
-  print(model.config)
   model.parameters
   model.to(device)
   
