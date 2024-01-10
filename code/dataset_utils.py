@@ -6,6 +6,8 @@ from config.config import call_config
 from entity_token_adder import add_typed_entity_marker_punct
 from preprocessing import preprocessing
 
+conf = call_config()
+
 def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
   subject_entity = []
@@ -26,8 +28,9 @@ def tokenized_dataset(dataset, tokenizer):
     temp = ''
     temp = e01 + '[SEP]' + e02
     concat_entity.append(temp)
-  tokenized_sentences = tokenizer(
-      concat_entity,
+  
+  if conf.use_entity_marker:
+    tokenized_sentences = tokenizer(
       list(dataset['sentence']),
       return_tensors="pt",
       padding=True,
@@ -35,6 +38,16 @@ def tokenized_dataset(dataset, tokenizer):
       max_length=256,
       add_special_tokens=True,
       )
+  else:
+    tokenized_sentences = tokenizer(
+        concat_entity,
+        list(dataset['sentence']),
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=256,
+        add_special_tokens=True,
+        )
   return tokenized_sentences
 
 def tokenized_dataset_xlm(dataset, tokenizer):
@@ -66,8 +79,6 @@ def tokenized_dataset_xlm(dataset, tokenizer):
 def load_data(dataset_dir, train=False):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
   pd_dataset = pd.read_csv(dataset_dir)
-  
-  conf = call_config()
   
   # use entity marker
   if conf.use_entity_marker:
