@@ -22,3 +22,8 @@ utils:
 
 wandb:
   project_name: level2_RE
+  version_name: 0.1.0 (baseline, dup_sentence_preprocessing, Entity_Marker)
+
+use_entity_marker: True
+
+dup_preprocessing: True

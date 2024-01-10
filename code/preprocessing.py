@@ -27,7 +27,9 @@ def preprocessing(df):
 
     return df
 
-train, test = pd.read_csv("../dataset/train/train.csv"), pd.read_csv("../dataset/test/test.csv")
-train, test = preprocessing(train), preprocessing(test)
-train.to_csv("../dataset/train/train_final.csv")
-test.to_csv("../dataset/test/test_final.csv")
+
+if __name__ == '__main__':
+    train, test = pd.read_csv("../dataset/train/train.csv"), pd.read_csv("../dataset/test/test.csv")
+    train, test = preprocessing(train), preprocessing(test)
+    train.to_csv("../dataset/train/train_final.csv")
+    test.to_csv("../dataset/test/test_final.csv")

@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset
+from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
 from datasets import RE_Dataset
 from metrics import compute_metrics
 
@@ -10,6 +10,8 @@ import random
 import torch
 import wandb
 import os
+
+from config.config import call_config
 
 
 def set_seed(seed:int = 42):
@@ -23,20 +25,21 @@ def set_seed(seed:int = 42):
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="base_config")
-
-  args, _ = parser.parse_known_args()
-  conf = OmegaConf.load(f"./config/{args.config}.yaml")
+  conf = call_config()
 
   set_seed(42)
 
   wandb.login()
-  wandb.init(project=conf.wandb.project_name)
+  wandb.init(project=conf.wandb.project_name, name=conf.wandb.version_name)
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+  
+  # add special token
+  if conf.use_entity_marker:
+    entity_list = ['ORG', 'PER', 'POH', 'DAT', 'LOC', 'NOH']
+    tokenizer.add_special_tokens({'additional_special_tokens': entity_list})
 
   # load dataset
   train_dataset = load_data("../dataset/train/train.csv")
@@ -63,6 +66,11 @@ if __name__ == '__main__':
   model_config.num_labels = 30
 
   model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  
+  # model embeddings resize
+  if conf.use_entity_marker:
+    model.resize_token_embeddings(len(tokenizer))
+    
   print(model.config)
   model.parameters
   model.to(device)
@@ -94,7 +102,7 @@ if __name__ == '__main__':
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
-    eval_dataset=RE_train_dataset,
+    eval_dataset=RE_dev_dataset,
     compute_metrics=compute_metrics
   )
 

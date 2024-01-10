@@ -2,6 +2,9 @@ import pickle as pickle
 import pandas as pd
 import ast
 
+from config.config import call_config
+from entity_token_adder import add_typed_entity_marker_punct
+from preprocessing import preprocessing
 
 def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
@@ -63,7 +66,21 @@ def tokenized_dataset_xlm(dataset, tokenizer):
 def load_data(dataset_dir):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
   pd_dataset = pd.read_csv(dataset_dir)
-  dataset = preprocessing_dataset(pd_dataset)
+  
+  conf = call_config()
+  
+  # use entity marker
+  if conf.use_entity_marker:
+    pd_dataset = add_typed_entity_marker_punct(pd_dataset)
+  
+  dataset = preprocessing(pd_dataset)
+  
+  # use duplicated sentence preprocessing
+  if conf.dup_preprocessing:
+    outlier_sentence=[18458,6749,8364,22258,10202,277,10320,25094]
+    pd_dataset = pd_dataset.drop(outlier_sentence)
+    pd_dataset.drop_duplicates(['sentence', 'subject_word', 'object_word'], keep='first', inplace=True)
+    pd_dataset = pd_dataset.reset_index(drop=True)
   
   return dataset
 
