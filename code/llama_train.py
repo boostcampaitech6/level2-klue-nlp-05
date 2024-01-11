@@ -13,6 +13,7 @@ from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_
 tqdm.pandas()
 
 train_data = load_data("../dataset/train/train.csv")
+train_data = train_data[:10]
 
 question_template = "### Human: 다음 문장 내 두 단어를 no_relation, org:member_of, org:top_members/employees, org:alternate_names, per:date_of_birth, org:place_of_headquarters, per:employee_of, per:origin, per:title, org:members, per:schools_attended, per:colleagues, per:alternate_names, per:spouse, org:founded_by, org:political/religious_affiliation, per:children, org:founded, org:number_of_employees/members, per:place_of_birth, org:dissolved, per:parents, per:religion, per:date_of_death, per:place_of_residence, per:other_family, org:product, per:siblings, per:product, per:place_of_death 중 하나로 분류해줘. "
 train_label = label_to_num(train_data['label'].values)
@@ -131,6 +132,7 @@ trainer = SFTTrainer(
 model.eval()
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
+
 
 pipeline = pipeline(
     "text-generation",
