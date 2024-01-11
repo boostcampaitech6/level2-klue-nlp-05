@@ -1,3 +1,4 @@
 *.pyc
 code/results/*
 code/wandb/*
+code/__pycache__/*
