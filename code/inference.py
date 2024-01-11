@@ -12,6 +12,8 @@ import torch
 import numpy as np
 import argparse
 
+from omegaconf import OmegaConf
+
 
 def inference(model, tokenized_sent, device):
   """
