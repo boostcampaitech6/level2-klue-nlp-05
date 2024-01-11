@@ -108,8 +108,7 @@ if __name__ == '__main__':
     adam_beta2=conf.train.adam_beta2,
     adam_epsilon=conf.train.adam_epsilon,
     lr_scheduler_type=conf.train.lr_scheduler_type,
-    fp16=conf.train.fp16,
-    bf16=conf.train.bf16
+    fp16=conf.train.fp16
   )
   trainer = Trainer(
     model=model,
