@@ -20,6 +20,7 @@ train:
   adam_epsilon: 1e-8
   lr_scheduler_type: linear
   fp16: True
+  bf16: False
 
 utils:
   seed: 42
