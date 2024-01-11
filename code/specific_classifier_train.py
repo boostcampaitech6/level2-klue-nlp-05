@@ -52,16 +52,21 @@ if __name__ == '__main__':
     set_seed(conf.utils.seed)
     
     # pair_list에 entity pair의 list를 저장하고 train set을 pair별로 분리
-    pair_list = pair_separater(conf.path.train_path)
+    pair_list_train = ['PER-DAT', 'ORG-PER', 'PER-ORG', 'PER-POH', 
+                       'ORG-ORG', 'ORG-DAT', 'ORG-LOC', 'ORG-POH', 
+                       'ORG-NOH', 'PER-NOH', 'PER-POH', 'PER-PER']
+    pair_separater(conf.path.train_path)
 
     # load model and tokenizer
     MODEL_NAME = conf.model.model_name
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
     # entity pair별로 학습진행
-    for pair in pair_list:
+    for pair in pair_list_train:
         wandb.login()
-        wandb.init(project=f'{conf.wandb.project_name}_{pair}')
+        wandb.init(project=conf.wandb.project_name,
+                   entity='level2-klue-nlp-05',
+                   name=f'{conf.wandb.curr_ver} ({pair})')
 
         # load dataset
         train_dataset = load_data(f"../dataset/train/{pair}_train.csv")
@@ -117,7 +122,7 @@ if __name__ == '__main__':
             load_best_model_at_end = True,
             metric_for_best_model="micro f1 score",
             report_to="wandb",
-            fp16=conf.fp16
+            fp16=conf.train.fp16
         )
         trainer = Trainer(
             model=model,

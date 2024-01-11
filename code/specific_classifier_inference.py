@@ -15,30 +15,30 @@ import argparse
 
 
 def inference(model, tokenized_sent, device):
-  """
-    test dataset을 DataLoader로 만들어 준 후,
-    batch_size로 나눠 model이 예측 합니다.
-  """
-  dataloader = DataLoader(tokenized_sent, batch_size=16, shuffle=False)
-  model.eval()
-  output_pred = []
-  output_prob = []
-  for i, data in enumerate(tqdm(dataloader)):
-    with torch.no_grad():
-      outputs = model(
-          input_ids=data['input_ids'].to(device),
-          attention_mask=data['attention_mask'].to(device),
-          token_type_ids=data['token_type_ids'].to(device)
-          )
-    logits = outputs[0]
-    prob = F.softmax(logits, dim=-1).detach().cpu().numpy()
-    logits = logits.detach().cpu().numpy()
-    result = np.argmax(logits, axis=-1)
+    """
+      test dataset을 DataLoader로 만들어 준 후,
+      batch_size로 나눠 model이 예측 합니다.
+    """
+    dataloader = DataLoader(tokenized_sent, batch_size=16, shuffle=False)
+    model.eval()
+    output_pred = []
+    output_prob = []
+    for i, data in enumerate(tqdm(dataloader)):
+        with torch.no_grad():
+            outputs = model(
+                input_ids=data['input_ids'].to(device),
+                attention_mask=data['attention_mask'].to(device),
+                token_type_ids=data['token_type_ids'].to(device)
+                )
+        logits = outputs[0]
+        prob = F.softmax(logits, dim=-1).detach().cpu().numpy()
+        logits = logits.detach().cpu().numpy()
+        result = np.argmax(logits, axis=-1)
 
-    output_pred.append(result)
-    output_prob.append(prob)
-  
-  return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
+        output_pred.append(result)
+        output_prob.append(prob)
+    
+    return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
 
 
 def pair_separater(file_path):
@@ -77,15 +77,21 @@ if __name__ == '__main__':
     Tokenizer_NAME = conf.model.model_name
     tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
 
-    pair_list = pair_separater(conf.path.test_path)
+    pair_list_train = ['PER-DAT', 'ORG-PER', 'PER-ORG', 'PER-POH', 
+                       'ORG-ORG', 'ORG-DAT', 'ORG-LOC', 'ORG-POH', 
+                       'ORG-NOH', 'PER-NOH', 'PER-POH', 'PER-PER']
+    pair_list_test = pair_separater(conf.path.test_path)
 
-    test_id_final = pd.Series()
+    test_id_final = pd.Series(dtype='int64')
     pred_answer_final = []
     output_prob_final = []
 
-    # entity pair별로 추론진행
-    for pair in pair_list:
-        ## load my model
+    exception_pair = set(pair_list_test) - set(pair_list_train)
+    exception_pair = list(exception_pair)
+
+    # Expected entity pair(Train에서 학습시킨 각 pair의 classifier)별로 추론진행
+    for pair in pair_list_train:
+        ## load model for expected
         MODEL_NAME = f'./best_model/{pair}' # model dir.
         model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
         model.parameters
@@ -104,7 +110,29 @@ if __name__ == '__main__':
         test_id_final = pd.concat([test_id_final, test_id], axis=0, ignore_index=True)
         pred_answer_final += pred_answer
         output_prob_final += output_prob
-    
+      
+    # Exception entity pair(General Classifier)별로 추론진행
+    for pair in exception_pair:
+        ## load model for exception
+        MODEL_NAME = f'./best_model/General' # General Classifier
+        model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+        model.parameters
+        model.to(device)
+
+        # load test dataset
+        test_id, test_dataset, test_label = load_test_dataset(f'../dataset/test/{pair}_test.csv', 
+                                                              tokenizer)
+        Re_test_dataset = RE_Dataset(test_dataset,
+                                     test_label)
+        
+        ## predict answer
+        pred_answer, output_prob = inference(model, Re_test_dataset, device)
+        pred_answer = num_to_label(pred_answer)
+
+        test_id_final = pd.concat([test_id_final, test_id], axis=0, ignore_index=True)
+        pred_answer_final += pred_answer
+        output_prob_final += output_prob
+
     ## make csv file with predicted answer
     #########################################################
     # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.

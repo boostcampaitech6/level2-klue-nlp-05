@@ -29,10 +29,12 @@ if __name__ == '__main__':
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
 
-  set_seed(42)
+  set_seed(conf.utils.seed)
 
   wandb.login()
-  wandb.init(project=conf.wandb.project_name)
+  wandb.init(project=conf.wandb.project_name,
+             entity='level2-klue-nlp-05',
+             name=f'{conf.wandb.curr_ver} (General)')
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
@@ -62,7 +64,8 @@ if __name__ == '__main__':
   model_config = AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, 
+                                                              config=model_config)
   print(model.config)
   model.parameters
   model.to(device)
@@ -89,7 +92,7 @@ if __name__ == '__main__':
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
     report_to="wandb",
-    fp16=conf.fp16
+    fp16=conf.train.fp16
   )
   trainer = Trainer(
     model=model,
@@ -101,6 +104,6 @@ if __name__ == '__main__':
 
   # train model
   trainer.train()
-  model.save_pretrained('./best_model')
+  model.save_pretrained('./best_model/General')
   
   wandb.finish()
