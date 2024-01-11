@@ -1,7 +1,6 @@
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoConfig, ElectraForSequenceClassification, ElectraTokenizer, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset
-from datasets import RE_Dataset
+from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
 from metrics import compute_metrics
 
 import numpy as np
@@ -21,7 +20,6 @@ def set_seed(seed:int = 42):
     np.random.seed(seed)
     random.seed(seed)
 
-
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("--config", "-c", type=str, default="base_config")
@@ -29,31 +27,29 @@ if __name__ == '__main__':
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
 
-  set_seed(42)
+  set_seed(conf.utils.seed)
 
   wandb.login()
   wandb.init(project=conf.wandb.project_name)
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
-  tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+  tokenizer = ElectraTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = load_data("../dataset/train/train.csv")
+  train_dataset = load_data(conf.path.train_path)
+  dev_dataset = load_data(conf.path.dev_path)
 
   train_label = label_to_num(train_dataset['label'].values)
+  dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
-  if MODEL_NAME.split('-')[0] == 'xlm':
-    tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
-  else:
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+  tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+  tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  
-  # Split train dataset into train, valid.
-  RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
+  RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
@@ -62,7 +58,7 @@ if __name__ == '__main__':
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  model = ElectraForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
   print(model.config)
   model.parameters
   model.to(device)
@@ -88,8 +84,10 @@ if __name__ == '__main__':
     eval_steps=conf.train.eval_steps,            # evaluation step.
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
-    report_to="wandb"
+    report_to="wandb",
+    fp16=True
   )
+  
   trainer = Trainer(
     model=model,
     args=training_args,

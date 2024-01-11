@@ -1,8 +1,8 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoConfig, ElectraForSequenceClassification, ElectraTokenizer, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
-from dataset_utils import load_test_dataset, num_to_label
+from omegaconf import OmegaConf
+from load_data import RE_Dataset, load_test_dataset, num_to_label
 from train import set_seed
-from datasets import RE_Dataset
 from tqdm import tqdm
 
 import torch.nn.functional as F
@@ -56,11 +56,11 @@ if __name__ == '__main__':
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
-  tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
+  tokenizer = ElectraTokenizer.from_pretrained(Tokenizer_NAME)
 
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
-  model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
+  model = ElectraForSequenceClassification.from_pretrained(args.model_dir)
   model.parameters
   model.to(device)
 
@@ -81,4 +81,3 @@ if __name__ == '__main__':
   output.to_csv('./prediction/submission.csv', index=False) # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
   #### 필수!! ##############################################
   print('---- Finish! ----')
-  
