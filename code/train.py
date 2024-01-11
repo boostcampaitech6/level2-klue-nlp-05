@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, AutoModelForCausalLM
 from omegaconf import OmegaConf
 from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
-from datasets import RE_Dataset
+from custom_datasets import RE_Dataset
 from metrics import compute_metrics
 
 import numpy as np
@@ -70,15 +70,16 @@ if __name__ == '__main__':
     device_map = {"": 0}
     torch_dtype = torch.bfloat16
     model = AutoModelForCausalLM.from_pretrainedAutoModelForCausalLM.from_pretrained(
-                                                                                      MODEL_NAME,
-                                                                                      quantization_config=quantization_config,
-                                                                                      device_map=device_map,
-                                                                                      trust_remote_code=True,
-                                                                                      torch_dtype=torch_dtype,
-                                                                                      use_auth_token=False,
-                                                                                  )    
+                                            MODEL_NAME,
+                                            quantization_config=quantization_config,
+                                            device_map=device_map,
+                                            trust_remote_code=True,
+                                            torch_dtype=torch_dtype,
+                                            use_auth_token=False,
+                                            cache_dir='/data/ephemeral/home/tmp'
+                                        )    
   else:
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config, cache_dir='/data/ephemeral/home/tmp')
   print(model.config)
   model.parameters
   model.to(device)

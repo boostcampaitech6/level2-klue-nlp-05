@@ -31,8 +31,8 @@ class ScriptArguments:
     dataset_text_field: Optional[str] = field(default="text", metadata={"help": "the text field of the dataset"})
     log_with: Optional[str] = field(default=None, metadata={"help": "use 'wandb' to log with wandb"})
     learning_rate: Optional[float] = field(default=1.41e-5, metadata={"help": "the learning rate"})
-    batch_size: Optional[int] = field(default=4, metadata={"help": "the batch size"})
-    seq_length: Optional[int] = field(default=512, metadata={"help": "Input sequence length"})
+    batch_size: Optional[int] = field(default=1, metadata={"help": "the batch size"})
+    seq_length: Optional[int] = field(default=256, metadata={"help": "Input sequence length"})
     gradient_accumulation_steps: Optional[int] = field(
         default=2, metadata={"help": "the number of gradient accumulation steps"}
     )
@@ -65,7 +65,7 @@ elif script_args.load_in_8bit or script_args.load_in_4bit:
         load_in_8bit=script_args.load_in_8bit, load_in_4bit=script_args.load_in_4bit
     )
     device_map = {"": 0}
-    torch_dtype = torch.bfloat16
+    torch_dtype = torch.float16#torch.bfloat16
 else:
     device_map = None
     quantization_config = None
@@ -73,9 +73,7 @@ else:
 
 model = AutoModelForCausalLM.from_pretrained(
     script_args.model_name,
-    trust_remote_code=script_args.trust_remote_code,
     torch_dtype=torch_dtype,
-    use_auth_token=script_args.use_auth_token,
     cache_dir='/data/ephemeral/home/tmp'
 )
 model.to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
@@ -104,15 +102,15 @@ training_args = TrainingArguments(
     disable_tqdm=False,
 )
 
-if script_args.use_peft:
-    peft_config = LoraConfig(
-        r=script_args.peft_lora_r,
-        lora_alpha=script_args.peft_lora_alpha,
-        bias="none",
-        task_type="CAUSAL_LM",
-    )
-else:
-    peft_config = None
+# if script_args.use_peft:
+#     peft_config = LoraConfig(
+#         r=script_args.peft_lora_r,
+#         lora_alpha=script_args.peft_lora_alpha,
+#         bias="none",
+#         task_type="CAUSAL_LM",
+#     )
+# else:
+peft_config = None
 
 trainer = SFTTrainer(
     model=model,
@@ -125,9 +123,9 @@ trainer = SFTTrainer(
 )
 
 
-trainer.train()
+#trainer.train()
 
-trainer.save_model(training_args.output_dir)
+#trainer.save_model(training_args.output_dir)
 
 
 model.eval()
@@ -138,13 +136,13 @@ pipeline = pipeline(
     "text-generation",
     model=model,
     tokenizer=tokenizer,
-    torch_dtype=torch.bfloat16,
+    torch_dtype=torch.float16,#bfloat16,
     device_map={'':0},
 )
 
 
-query = instructions_ds_dict['eval']['text'][1].split('### Assistant: ')[0] + '### Assistant:'
-queries = [instructions_ds_dict['eval']['text'][i].split('### Assistant: ')[0] + '### Assistant:' for i in range(len(instructions_ds_dict['eval']))]
+query = instructions_ds_dict['validation']['text'][1].split('### Assistant: ')[0] + '### Assistant:'
+queries = [instructions_ds_dict['validation']['text'][i].split('### Assistant: ')[0] + '### Assistant:' for i in range(len(instructions_ds_dict['validation']))]
 sequences = pipeline(
     queries,
     num_return_sequences=1,
