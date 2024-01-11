@@ -35,6 +35,23 @@ if __name__ == '__main__':
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = ElectraTokenizer.from_pretrained(MODEL_NAME)
+  # 스페셜 토큰 추가
+  tokenizer.add_special_tokens({'additional_special_tokens': ['<S:ORG>', 
+                                                              '<S:PER>', 
+                                                              '</S:ORG>', 
+                                                              '</S:PER>',  
+                                                              '<O:ORG>', 
+                                                              '<O:PER>', 
+                                                              '<O:POH>', 
+                                                              '<O:LOC>', 
+                                                              '<O:DAT>', 
+                                                              '<O:NOH>', 
+                                                              '</O:ORG>', 
+                                                              '</O:PER>', 
+                                                              '</O:POH>', 
+                                                              '</O:LOC>', 
+                                                              '</O:DAT>', 
+                                                              '</O:NOH>']})
 
   # load dataset
   train_dataset = load_data(conf.path.train_path)
@@ -61,6 +78,8 @@ if __name__ == '__main__':
   model = ElectraForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
   print(model.config)
   model.parameters
+  # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
+  model.resize_token_embeddings(len(tokenizer))
   model.to(device)
   
   # 사용한 option 외에도 다양한 option들이 있습니다.
