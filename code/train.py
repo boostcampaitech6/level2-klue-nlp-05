@@ -1,6 +1,6 @@
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, AutoModelForCausalLM
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset
+from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
 from datasets import RE_Dataset
 from metrics import compute_metrics
 
@@ -41,10 +41,16 @@ if __name__ == '__main__':
   # load dataset
   train_dataset = load_data("../dataset/train/train.csv")
 
+  if MODEL_NAME=="beomi/llama-2-ko-7b":
+    question_template = "### Human: 다음 두 문장의 관계를 entailment, neutral, contradiction 중 하나로 분류해줘. "
+    train_instructions = [f'{question_template}\npremise: {x}\nhypothesis: {y}\n\n### Assistant: {label_to_num[z]}' for x,y,z in zip(train_dataset['premise'],train_dataset['hypothesis'],train_dataset['label'])]
   train_label = label_to_num(train_dataset['label'].values)
 
   # tokenizing dataset
-  tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+  if MODEL_NAME[:10] == "xlm-roberta":
+    tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
+  else:
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -56,10 +62,23 @@ if __name__ == '__main__':
   
   print(device)
   # setting model hyperparameter
-  model_config =  AutoConfig.from_pretrained(MODEL_NAME)
+  model_config = AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  if MODEL_NAME == "beomi/llama-2-ko-7b":
+    quantization_config = BitsAndBytesConfig(load_in_8bit=True, load_in_4bit=False)
+    device_map = {"": 0}
+    torch_dtype = torch.bfloat16
+    model = AutoModelForCausalLM.from_pretrainedAutoModelForCausalLM.from_pretrained(
+                                                                                      MODEL_NAME,
+                                                                                      quantization_config=quantization_config,
+                                                                                      device_map=device_map,
+                                                                                      trust_remote_code=True,
+                                                                                      torch_dtype=torch_dtype,
+                                                                                      use_auth_token=False,
+                                                                                  )    
+  else:
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
   print(model.config)
   model.parameters
   model.to(device)
@@ -89,7 +108,8 @@ if __name__ == '__main__':
     adam_beta2=conf.train.adam_beta2,
     adam_epsilon=conf.train.adam_epsilon,
     lr_scheduler_type=conf.train.lr_scheduler_type,
-    fp16=conf.train.fp16
+    fp16=conf.train.fp16,
+    bf16=conf.train.bf16
   )
   trainer = Trainer(
     model=model,

@@ -58,7 +58,7 @@ if __name__ == '__main__':
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
-  tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
+  tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME, return_token_type_ids=True)
 
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
   ## load test datset
   test_dataset_dir = conf.path.test_path
-  test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer)
+  test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer, MODEL_NAME)
   Re_test_dataset = RE_Dataset(test_dataset ,test_label)
 
   ## predict answer
