@@ -29,8 +29,9 @@ def tokenized_dataset(dataset, tokenizer):
       return_tensors="pt",
       padding=True,
       truncation=True,
-      max_length=256,
+      max_length=128,
       add_special_tokens=True,
+      return_token_type_ids=True
       )
   return tokenized_sentences
 
@@ -47,7 +48,7 @@ def tokenized_dataset_xlm(dataset, tokenizer):
   concat_entity = []
   for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
     temp = ''
-    temp = e01 + '</s></s>' + e02
+    temp = e01 + '</s>' + e02
     concat_entity.append(temp)
   tokenized_sentences = tokenizer(
       concat_entity,
@@ -55,7 +56,7 @@ def tokenized_dataset_xlm(dataset, tokenizer):
       return_tensors="pt",
       padding=True,
       truncation=True,
-      max_length=256,
+      max_length=128,
       add_special_tokens=True,
       )
   return tokenized_sentences
@@ -67,7 +68,7 @@ def load_data(dataset_dir):
   
   return dataset
 
-def load_test_dataset(dataset_dir, tokenizer):
+def load_test_dataset(dataset_dir, tokenizer, MODEL_NAME=None):
   """
     test dataset을 불러온 후,
     tokenizing 합니다.
@@ -75,7 +76,10 @@ def load_test_dataset(dataset_dir, tokenizer):
   test_dataset = load_data(dataset_dir)
   test_label = list(map(int,test_dataset['label'].values))
   # tokenizing dataset
-  tokenized_test = tokenized_dataset(test_dataset, tokenizer)
+  if MODEL_NAME and MODEL_NAME[:10] == "xlm-roberta":
+    tokenized_test = tokenized_dataset_xlm(test_dataset, tokenizer)
+  else:
+    tokenized_test = tokenized_dataset(test_dataset, tokenizer)
   return test_dataset['id'], tokenized_test, test_label
 
 def label_to_num(label):
