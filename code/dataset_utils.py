@@ -30,6 +30,9 @@ def tokenized_dataset(dataset, tokenizer):
     concat_entity.append(temp)
   
   if conf.use_entity_marker:
+    # use entity marker
+    dataset = add_typed_entity_marker_punct(dataset)
+    
     tokenized_sentences = tokenizer(
       list(dataset['sentence']),
       return_tensors="pt",
@@ -80,18 +83,7 @@ def load_data(dataset_dir, train=False):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
   pd_dataset = pd.read_csv(dataset_dir)
   
-  # use entity marker
-  if conf.use_entity_marker:
-    pd_dataset = add_typed_entity_marker_punct(pd_dataset)
-  
-  dataset = preprocessing(pd_dataset)
-  
-  # use duplicated sentence preprocessing
-  if conf.dup_preprocessing & train:
-    outlier_sentence=[18458,6749,8364,22258,10202,277,10320,25094]
-    pd_dataset = pd_dataset.drop(outlier_sentence)
-    pd_dataset.drop_duplicates(['sentence', 'subject_word', 'object_word'], keep='first', inplace=True)
-    pd_dataset = pd_dataset.reset_index(drop=True)
+  dataset = preprocessing(pd_dataset, train=train)
   
   return dataset
 

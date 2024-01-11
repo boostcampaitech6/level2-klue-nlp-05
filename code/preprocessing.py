@@ -1,7 +1,10 @@
 import pandas as pd
 import ast
+from config.config import call_config
 
-def preprocessing(df):
+conf = call_config()
+
+def preprocessing(df, train=False):
     # seperate subject_entity
     subject_word, subject_start_idx, subject_end_idx, subject_type = [], [], [], []
     for data in df['subject_entity']:
@@ -24,6 +27,25 @@ def preprocessing(df):
     df.drop(columns=['subject_entity', 'object_entity'], inplace=True)
     # add entity_pair
     df['entity_pair'] = df['subject_type'] + "-" + df['object_type']
+    
+    
+      # use duplicated sentence preprocessing
+    if conf.dup_preprocessing & train:
+        outlier_sentence=[18458,6749,8364,22258,10202,277,10320,25094]
+        df = df.drop(outlier_sentence)
+        df.drop_duplicates(['sentence', 'subject_word', 'object_word'], keep='first', inplace=True)
+        df = df.reset_index(drop=True)
+        
+    if conf.type_pair_preprocessing & train:
+        for label in df['label'].unique():
+            label_df = df[df['label'] == label]
+            
+            type_counts = label_df['object_type'].value_counts()
+
+            types_to_remove = type_counts[type_counts <= 30].index
+            
+            df = df[~((df['label'] == label) & (df['object_type'].isin(types_to_remove)))]
+
 
     return df
 
