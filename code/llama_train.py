@@ -78,7 +78,7 @@ model = AutoModelForCausalLM.from_pretrained(
     use_auth_token=script_args.use_auth_token,
     cache_dir='/data/ephemeral/home/tmp'
 )
-
+model.to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
 
 tokenizer = AutoTokenizer.from_pretrained(script_args.model_name)
 
