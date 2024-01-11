@@ -4,11 +4,11 @@ path:
   test_path: ../dataset/test/test_final.csv
 
 model:
-  model_name: klue/bert-base
+  model_name: xlm-roberta-large
 
 train:
-  epochs: 20
-  batch_size: 64
+  epochs: 5
+  batch_size: 16
   learning_rate: 2e-05
   save_steps: 500
   warmup_steps: 500
@@ -19,6 +19,7 @@ train:
   adam_beta2: 0.999
   adam_epsilon: 1e-8
   lr_scheduler_type: linear
+  fp16: True
 
 utils:
   seed: 42
