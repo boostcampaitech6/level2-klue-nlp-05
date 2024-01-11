@@ -37,14 +37,36 @@ def preprocessing(df, train=False):
         df = df.reset_index(drop=True)
         
     if conf.type_pair_preprocessing & train:
+        # ID가 14958 object_type을 ORG로 변경
+        df.loc[df['id'] == 14958, 'object_type'] = 'ORG'
+
+        # ID가 28891 object_type을 ORG로 변경
+        df.loc[df['id'] == 28891, 'object_type'] = 'ORG'
+
         for label in df['label'].unique():
             label_df = df[df['label'] == label]
-            
+
+            # 각 label에 대한 전체 개수의 5% 계산
+            threshold = len(label_df) * 0.05
+
             type_counts = label_df['object_type'].value_counts()
 
+            # type이 전체 개수의 30개 이하인 것 찾기
             types_to_remove = type_counts[type_counts <= 30].index
             
-            df = df[~((df['label'] == label) & (df['object_type'].isin(types_to_remove)))]
+            # 조건에 맞는 object_type 제거, 단 '@object_entity@'에 'POH'가 포함된 'POH' object_type은 제외
+            df = df[~((df['label'] == label) & (df['object_type'].isin(types_to_remove)) & ~((df['object_type'] == 'POH')))]
+
+            
+    if conf.type_pair_preprocessing2 & train:      
+        for label in df['label'].unique():
+            type_counts = df[df['label'] == label]['object_type'].value_counts()
+            
+            # 가장 많은 type으로 변경
+            if not type_counts.empty:
+                most_frequent_type = type_counts.idxmax()
+
+                df.loc[df['label'] == label, 'object_type'] = most_frequent_type
 
 
     return df
