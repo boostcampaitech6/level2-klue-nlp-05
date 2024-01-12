@@ -1,6 +1,23 @@
 import pandas as pd
 import ast
 
+def train_data_preprocessing(df):
+    '''
+    train data에서 중복 데이터가 존재해 이들을 삭제
+    '''
+
+    # sentence, subject_entity, object_entity, label 모두 중복인 데이터 삭제
+    new_df = df.drop_duplicates(['sentence', 'subject_entity','object_entity','label'])
+
+    # sentence, sub_entity, obj_entity가 중복되는 data에 대해 label이 no_relation인 데이터 삭제
+    idx_list = [12829, 32299, 11511, 3296, 25094]   # 중복 데이터의 id
+
+    for i in range(len(idx_list)):
+        idx = new_df[new_df["id"] == idx_list[i]].index
+        new_df.drop(idx, inplace=True)
+
+    return new_df
+
 def preprocessing(df):
     # seperate subject_entity
     subject_word, subject_start_idx, subject_end_idx, subject_type = [], [], [], []
@@ -28,6 +45,7 @@ def preprocessing(df):
     return df
 
 train, test = pd.read_csv("../dataset/train/train.csv"), pd.read_csv("../dataset/test/test.csv")
+train = train_data_preprocessing(train)
 train, test = preprocessing(train), preprocessing(test)
 train.to_csv("../dataset/train/train_final.csv")
 test.to_csv("../dataset/test/test_final.csv")
