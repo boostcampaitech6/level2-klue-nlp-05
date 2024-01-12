@@ -1,4 +1,4 @@
-from transformers import AutoConfig, RobertaForSequenceClassification, RobertaTokenizer, Trainer, TrainingArguments
+from transformers import AutoConfig, AutoModel, AutoTokenizer, Trainer, TrainingArguments
 from omegaconf import OmegaConf
 from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
 from metrics import compute_metrics
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
-  tokenizer = RobertaTokenizer.from_pretrained(MODEL_NAME)
+  tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
   # 스페셜 토큰 추가
   # tokenizer.add_special_tokens({'additional_special_tokens': ['<S:ORG>', 
   #                                                             '<S:PER>', 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model = RobertaForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  model = AutoModel.from_pretrained(MODEL_NAME, config=model_config)
   print(model.config)
   model.parameters
   # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
