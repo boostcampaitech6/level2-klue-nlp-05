@@ -12,7 +12,8 @@ import wandb
 import os
 
 from config.config import call_config
-
+import torch.nn as nn
+import torch.nn.functional as F
 
 def set_seed(seed:int = 42):
     torch.manual_seed(seed)
@@ -22,6 +23,36 @@ def set_seed(seed:int = 42):
     torch.backends.cudnn.benchmark = False
     np.random.seed(seed)
     random.seed(seed)
+    
+class SmoothFocalCrossEntropyLoss(nn.Module):
+  def __init__(self, smoothing=0.1, gamma=2.0):
+      super(SmoothFocalCrossEntropyLoss, self).__init__()
+      self.smoothing = smoothing
+      self.gamma = gamma
+
+  def forward(self, input, target):
+      log_prob = F.log_softmax(input, dim=-1)
+      prob = torch.exp(log_prob)
+      weight = input.new_ones(input.size()) * self.smoothing / (input.size(-1) - 1.)
+      weight.scatter_(-1, target.unsqueeze(-1), (1. - self.smoothing))
+      
+      # focal loss weight
+      focal_weight = (1 - prob).pow(self.gamma)
+      weight *= focal_weight
+
+      loss = (-weight * log_prob).sum(dim=-1).mean()
+      return loss
+
+class CustomTrainer(Trainer):
+  def compute_loss(self, model, inputs, return_outputs=False):
+      labels = inputs.get("labels")
+      outputs = model(**inputs)
+      logits = outputs.get("logits")
+
+      loss_func = SmoothFocalCrossEntropyLoss(smoothing=0.1, gamma=2.0)
+      loss = loss_func(logits, labels)
+
+      return (loss, outputs) if return_outputs else loss
 
 
 if __name__ == '__main__':
@@ -90,7 +121,7 @@ if __name__ == '__main__':
     report_to="wandb",
     fp16=True
   )
-  trainer = Trainer(
+  trainer = CustomTrainer(
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
