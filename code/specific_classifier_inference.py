@@ -38,7 +38,7 @@ def inference(model, tokenized_sent, device):
         output_pred.append(result)
         output_prob.append(prob)
     
-    return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
+    return np.concatenate(output_prob, axis=0).tolist()
 
 
 def pair_separater(file_path):
@@ -91,26 +91,36 @@ if __name__ == '__main__':
 
     # Expected entity pair(Train에서 학습시킨 각 pair의 classifier)별로 추론진행
     for pair in pair_list_train:
-        ## load model for expected
-        MODEL_NAME = f'./best_model/{pair}' # model dir.
-        model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
-        model.parameters
-        model.to(device)
-
         ## load test datset
         test_id, test_dataset, test_label = load_test_dataset(f'../dataset/test/{pair}_test.csv', 
                                                               tokenizer)
         Re_test_dataset = RE_Dataset(test_dataset, 
                                      test_label)
-
-        ## predict answer
-        pred_answer, output_prob = inference(model, Re_test_dataset, device) # model에서 class 추론
-        pred_answer = num_to_label(pred_answer) # 숫자로 된 class를 원래 문자열 라벨로 변환.
         
+        output_prob = []
+        label_curr = []
+        for fold in range(conf.utils.stratifiedKFold):
+            ## load model for expected
+            MODEL_NAME = f'./best_model/{pair}/{fold}' # model dir.
+            model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
+            model.parameters
+            model.to(device)
+
+            ## predict answer
+            pred_answer, output_prob = inference(model, Re_test_dataset, device) # model에서 class 추론
+            pred_answer = num_to_label(pred_answer) # 숫자로 된 class를 원래 문자열 라벨로 변환.
+            
+            # pred_answer_final += pred_answer
+            output_prob.append(output_prob)
+
+        output_prob = [[np.mean(np.array([sublist[i] for sublist in output_prob]), axis=0) for i in range(len(output_prob_curr[0]))]]
+        label_curr = [np.argmax(logits, axis=-1) for logits in output_prob]
+        pred_answer = num_to_label(label_curr)
+
         test_id_final = pd.concat([test_id_final, test_id], axis=0, ignore_index=True)
         pred_answer_final += pred_answer
         output_prob_final += output_prob
-      
+
     # Exception entity pair(General Classifier)별로 추론진행
     for pair in exception_pair:
         ## load model for exception

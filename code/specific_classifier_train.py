@@ -82,7 +82,7 @@ if __name__ == '__main__':
                                       train_label)
         
         # Stratofied K-Fold 설정
-        skf = StratifiedKFold(n_splits=10)
+        skf = StratifiedKFold(n_splits=conf.utils.stratifiedKFold)
 
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print(device)
@@ -118,12 +118,10 @@ if __name__ == '__main__':
                 warmup_steps=conf.train.warmup_steps,                # number of warmup steps for learning rate scheduler
                 weight_decay=conf.train.weight_decay,               # strength of weight decay
                 logging_dir='./logs',            # directory for storing logs
-                logging_steps=conf.train.logging_steps,              # log saving step.
-                evaluation_strategy='steps', # evaluation strategy to adopt during training
+                evaluation_strategy='epoch', # evaluation strategy to adopt during training
                                             # `no`: No evaluation during training.
                                             # `steps`: Evaluate every `eval_steps`.
                                             # `epoch`: Evaluate every end of epoch.
-                eval_steps=conf.train.eval_steps,            # evaluation step.
                 load_best_model_at_end = True,
                 metric_for_best_model="micro f1 score",
                 report_to="wandb",

@@ -8,7 +8,7 @@ model:
 
 train:
   epochs: 20
-  batch_size: 16
+  batch_size: 32
   learning_rate: 5e-5
   save_steps: 500
   warmup_steps: 500
@@ -20,6 +20,7 @@ train:
 utils:
   seed: 42
   top_k : 1
+  stratifiedKFold : 10
 
 wandb:
   project_name: jaehyeok
