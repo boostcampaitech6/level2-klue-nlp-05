@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, DataCollatorWithPadding
 from omegaconf import OmegaConf
 from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
 from datasets import RE_Dataset
@@ -37,6 +37,7 @@ if __name__ == '__main__':
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+  data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
   # load dataset
   train_dataset = load_data("../dataset/train/train.csv")
@@ -95,6 +96,7 @@ if __name__ == '__main__':
     args=training_args,
     train_dataset=RE_train_dataset,
     eval_dataset=RE_train_dataset,
+    data_collator=data_collator,
     compute_metrics=compute_metrics
   )
 
