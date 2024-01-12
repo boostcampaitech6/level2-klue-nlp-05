@@ -47,5 +47,5 @@ def preprocessing(df):
 train, test = pd.read_csv("../dataset/train/train.csv"), pd.read_csv("../dataset/test/test.csv")
 train = train_data_preprocessing(train)
 train, test = preprocessing(train), preprocessing(test)
-train.to_csv("../dataset/train/train_final.csv")
-test.to_csv("../dataset/test/test_final.csv")
+train.to_csv("../dataset/train/train_final.csv", index=False)
+test.to_csv("../dataset/test/test_final.csv", index=False)
