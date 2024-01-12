@@ -89,7 +89,8 @@ if __name__ == '__main__':
     eval_steps=conf.train.eval_steps,            # evaluation step.
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
-    report_to="wandb"
+    report_to="wandb",
+    fp16=conf.train.fp16
   )
   trainer = Trainer(
     model=model,

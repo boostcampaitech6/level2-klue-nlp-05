@@ -15,6 +15,7 @@ train:
   weight_decay: 0.01
   logging_steps: 100
   eval_steps: 500
+  fp16: True
 
 utils:
   seed: 42
