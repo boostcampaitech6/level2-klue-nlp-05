@@ -1,5 +1,6 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
+from omegaconf import OmegaConf
 from dataset_utils import load_test_dataset, num_to_label
 from train import set_seed
 from datasets import RE_Dataset
@@ -49,7 +50,7 @@ if __name__ == '__main__':
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
   print(args)
   
-  set_seed(42)
+  set_seed(conf.utils.seed)
   """
     주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
   """
