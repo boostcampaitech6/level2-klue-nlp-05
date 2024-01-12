@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset
+from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
 from datasets import RE_Dataset
 from metrics import compute_metrics
 
@@ -29,7 +29,7 @@ if __name__ == '__main__':
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
 
-  set_seed(42)
+  set_seed(conf.utils.seed)
 
   wandb.login()
   wandb.init(project=conf.wandb.project_name)
