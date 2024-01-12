@@ -61,7 +61,7 @@ class Processor:
             new_ss_list.append(new_ss)
             new_os_list.append(new_os)
             
-        tokenized_sentences = tokenizer(
+        tokenized_sentences = self.tokenizer(
         new_sentence_list,
         return_tensors="pt",
         padding=True,

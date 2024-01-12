@@ -4,7 +4,7 @@ from dataset_utils import label_to_num
 from datasets import RE_Dataset
 from metrics import compute_metrics
 from custom_model import Custom_Model
-from custom_prepro import Processor
+from custom_prepro2 import Processor
 import numpy as np
 import pandas as pd
 import argparse
@@ -34,7 +34,9 @@ if __name__ == '__main__':
   set_seed(42)
 
   wandb.login()
-  wandb.init(project=conf.wandb.project_name)
+  wandb.init(project=conf.wandb.project_name,
+             entity='level2-klue-nlp-05',
+             name=conf.wandb.curr_ver)
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
@@ -85,18 +87,20 @@ if __name__ == '__main__':
     eval_steps=conf.train.eval_steps,            # evaluation step.
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
-    report_to="wandb"
+    report_to="wandb",
+    fp16=conf.train.fp16
   )
   trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
-    eval_dataset=RE_train_dataset,
+    eval_dataset=RE_dev_dataset,
     compute_metrics=compute_metrics
   )
 
   # train model
   trainer.train()
-  model.save_pretrained('./best_model')
-  
+  save_path = f"save_model/{conf.model.model_name.replace('/', '_')}_Max-epoch:{conf.train.epochs}_Batch-size:{conf.train.batch_size}/"
+  torch.save(model.state_dict(), save_path)
+
   wandb.finish()

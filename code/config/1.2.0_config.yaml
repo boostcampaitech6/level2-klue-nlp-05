@@ -10,8 +10,8 @@ model:
 
 
 train:
-  epochs: 20
-  batch_size: 16
+  epochs: 1
+  batch_size: 32
   learning_rate: 5e-5
   save_steps: 500
   warmup_steps: 500
@@ -25,5 +25,6 @@ utils:
   top_k : 5
 
 wandb:
-  project_name: level2_RE
+  project_name: shingeun
+  curr_ver: 1.2.7
 
