@@ -4,7 +4,7 @@ path:
   test_path: ../dataset/test/test_final.csv
 
 model:
-  model_name: monologg/koelectra-base-v3-discriminator
+  model_name: klue/roberta-large
 
 train:
   epochs: 10

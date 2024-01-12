@@ -1,4 +1,4 @@
-from transformers import AutoConfig, ElectraForSequenceClassification, ElectraTokenizer, Trainer, TrainingArguments
+from transformers import AutoConfig, RobertaForSequenceClassification, RobertaTokenizer, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
 from omegaconf import OmegaConf
 from load_data import RE_Dataset, load_test_dataset, num_to_label
@@ -56,28 +56,28 @@ if __name__ == '__main__':
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
-  tokenizer = ElectraTokenizer.from_pretrained(Tokenizer_NAME)
+  tokenizer = RobertaTokenizer.from_pretrained(Tokenizer_NAME)
   # 스페셜 토큰 추가
-  tokenizer.add_special_tokens({'additional_special_tokens': ['<S:ORG>', 
-                                                              '<S:PER>', 
-                                                              '</S:ORG>', 
-                                                              '</S:PER>',  
-                                                              '<O:ORG>', 
-                                                              '<O:PER>', 
-                                                              '<O:POH>', 
-                                                              '<O:LOC>', 
-                                                              '<O:DAT>', 
-                                                              '<O:NOH>', 
-                                                              '</O:ORG>', 
-                                                              '</O:PER>', 
-                                                              '</O:POH>', 
-                                                              '</O:LOC>', 
-                                                              '</O:DAT>', 
-                                                              '</O:NOH>']})
+  # tokenizer.add_special_tokens({'additional_special_tokens': ['<S:ORG>', 
+  #                                                             '<S:PER>', 
+  #                                                             '</S:ORG>', 
+  #                                                             '</S:PER>',  
+  #                                                             '<O:ORG>', 
+  #                                                             '<O:PER>', 
+  #                                                             '<O:POH>', 
+  #                                                             '<O:LOC>', 
+  #                                                             '<O:DAT>', 
+  #                                                             '<O:NOH>', 
+  #                                                             '</O:ORG>', 
+  #                                                             '</O:PER>', 
+  #                                                             '</O:POH>', 
+  #                                                             '</O:LOC>', 
+  #                                                             '</O:DAT>', 
+  #                                                             '</O:NOH>']})
 
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
-  model = ElectraForSequenceClassification.from_pretrained(args.model_dir)
+  model = RobertaForSequenceClassification.from_pretrained(args.model_dir)
   model.parameters
   model.to(device)
 
