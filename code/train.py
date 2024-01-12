@@ -40,7 +40,7 @@ if __name__ == '__main__':
   data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
   # load dataset
-  train_dataset = load_data("../dataset/train/train.csv")
+  train_dataset = load_data(conf.path.train_path)
 
   train_label = label_to_num(train_dataset['label'].values)
 
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
-    eval_dataset=RE_train_dataset,
+    eval_dataset=RE_dev_dataset,
     data_collator=data_collator,
     compute_metrics=compute_metrics
   )
