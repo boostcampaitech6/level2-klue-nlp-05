@@ -1,4 +1,4 @@
-from transformers import AutoConfig, AutoModel, AutoTokenizer, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
 from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
 from metrics import compute_metrics
@@ -75,7 +75,7 @@ if __name__ == '__main__':
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model = AutoModel.from_pretrained(MODEL_NAME, config=model_config)
+  model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
   print(model.config)
   model.parameters
   # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정

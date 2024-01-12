@@ -1,4 +1,4 @@
-from transformers import AutoConfig, AutoModel, AutoTokenizer, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
 from omegaconf import OmegaConf
 from load_data import RE_Dataset, load_test_dataset, num_to_label
@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
-  model = AutoModel.from_pretrained(args.model_dir)
+  model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
   model.parameters
   model.to(device)
 
