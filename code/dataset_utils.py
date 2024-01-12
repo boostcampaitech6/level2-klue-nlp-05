@@ -1,3 +1,4 @@
+from preprocessing import train_data_preprocessing
 import pickle as pickle
 import pandas as pd
 import ast
@@ -63,7 +64,8 @@ def tokenized_dataset_xlm(dataset, tokenizer):
 def load_data(dataset_dir):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
   pd_dataset = pd.read_csv(dataset_dir)
-  dataset = preprocessing_dataset(pd_dataset)
+  cleaned_dataset = train_data_preprocessing(pd_dataset)
+  dataset = preprocessing_dataset(cleaned_dataset)
   
   return dataset
 
