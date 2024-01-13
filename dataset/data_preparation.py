@@ -95,39 +95,37 @@ def preprocessing(df):
     return df
 
 # def data_augmentation(df):
-#     num_samples = len(df[df['label']!='no_relation']) - len(df[df['label']=='no_relation'])
-#     relation_sample = df[df['label']!='no_relation'].sample(num_samples, random_state=42).reset_index(drop=True)
-#     subject_entity_sample = relation_sample.sample(frac=1, random_state=42)[['subject_word','subject_type']].sample(num_samples, random_state=42).reset_index(drop=True)
-#     object_entity_sample = relation_sample.sample(frac=1, random_state=42).sample(frac=1, random_state=42)[['object_word','object_type']].sample(num_samples, random_state=42).reset_index(drop=True)
+#     relation_sample = df[df['label']!='no_relation']
+#     entity_pair_sample = relation_sample.sample(frac=1, random_state=42)[['subject_word','subject_type','object_word','object_type']].sample(num_samples, random_state=42).reset_index(drop=True)
 #     relation_sample['id'] = range(len(train), len(train) + len(relation_sample))
 
 #     for idx in range(len(relation_sample)):
 #         # sentence
-#         relation_sample['sentence'][idx] = relation_sample['sentence'][idx].replace(relation_sample['subject_word'][idx], subject_entity_sample['subject_word'][idx])
-#         relation_sample['sentence'][idx] = relation_sample['sentence'][idx].replace(relation_sample['object_word'][idx], object_entity_sample['object_word'][idx])
+#         relation_sample['sentence'][idx] = relation_sample['sentence'][idx].replace(relation_sample['subject_word'][idx], entity_pair_sample['subject_word'][idx])
+#         relation_sample['sentence'][idx] = relation_sample['sentence'][idx].replace(relation_sample['object_word'][idx], entity_pair_sample['object_word'][idx])
 #         # label
 #         relation_sample['label'][idx] = 'no_relation'
 #         # subject_word
-#         relation_sample['subject_word'][idx] = subject_entity_sample['subject_word'][idx]
+#         relation_sample['subject_word'][idx] = entity_pair_sample['subject_word'][idx]
 #         # subject_start_idx
-#         relation_sample['subject_start_idx'][idx] = relation_sample['sentence'][idx].find(subject_entity_sample['subject_word'][idx])
+#         relation_sample['subject_start_idx'][idx] = relation_sample['sentence'][idx].find(entity_pair_sample['subject_word'][idx])
 #         # subject_end_idx
-#         relation_sample['subject_end_idx'][idx] = relation_sample['subject_start_idx'][idx] + len(subject_entity_sample['subject_word'][idx])
+#         relation_sample['subject_end_idx'][idx] = relation_sample['subject_start_idx'][idx] + len(entity_pair_sample['subject_word'][idx])
 #         # subject_type
-#         relation_sample['subject_type'][idx] = subject_entity_sample['subject_type'][idx]
+#         relation_sample['subject_type'][idx] = entity_pair_sample['subject_type'][idx]
 #         # object_word
-#         relation_sample['object_word'][idx] = object_entity_sample['object_word'][idx]
+#         relation_sample['object_word'][idx] = entity_pair_sample['object_word'][idx]
 #         # object_start_idx
-#         relation_sample['object_start_idx'][idx] = relation_sample['sentence'][idx].find(object_entity_sample['object_word'][idx])
+#         relation_sample['object_start_idx'][idx] = relation_sample['sentence'][idx].find(entity_pair_sample['object_word'][idx])
 #         # object_end_idx
-#         relation_sample['object_end_idx'][idx] = relation_sample['object_start_idx'][idx] + len(object_entity_sample['object_word'][idx])
+#         relation_sample['object_end_idx'][idx] = relation_sample['object_start_idx'][idx] + len(entity_pair_sample['object_word'][idx])
 #         # object_type
-#         relation_sample['object_type'][idx] = object_entity_sample['object_type'][idx]
+#         relation_sample['object_type'][idx] = entity_pair_sample['object_type'][idx]
     
 #     df = pd.concat([df, relation_sample])
 #     df = df.sample(frac=1, random_state=42)
 
-#     return df
+    return df
 
 df, test = pd.read_csv("./train/train.csv"), pd.read_csv("./test/test.csv")
 train, dev = train_dev_split(df)

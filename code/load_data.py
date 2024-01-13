@@ -39,69 +39,52 @@ def load_test_dataset(dataset_dir, tokenizer):
     return test_dataset['id'], tokenized_test, test_label
 
 def tokenized_dataset(dataset, tokenizer):
-    """ tokenizer에 따라 sentence를 tokenizing 합니다."""
-    concat_entity = []
-    for e01, e02 in zip(dataset['subject_word'], dataset['object_word']):
-      temp = ''
-      temp = e01 + '[SEP]' + e02
-      concat_entity.append(temp)
-    tokenized_sentences = tokenizer(
-        concat_entity,
-        list(dataset['sentence']),
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=256,
-        add_special_tokens=True,
-        )
-    
-    return tokenized_sentences
+  """ tokenizer에 따라 sentence를 tokenizing 합니다."""
+  sentences = []
 
-# def tokenized_dataset(dataset, tokenizer):
-#   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
-#   sentences = []
+  for idx, row in dataset.iterrows():
+    sentence = row['sentence']
+    subject_word, object_word = row['subject_word'], row['object_word']
+    subject_start_idx, subject_end_idx = row['subject_start_idx'], row['subject_end_idx']
+    object_start_idx, object_end_idx = row['object_start_idx'], row['object_end_idx']
+    subject_type, object_type = row['subject_type'], row['object_type']
 
-#   for idx, row in dataset.iterrows():
-#     sentence = row['sentence']
-#     subject_start_idx, subject_end_idx = row['subject_start_idx'], row['subject_end_idx']
-#     object_start_idx, object_end_idx = row['object_start_idx'], row['object_end_idx']
-#     subject_type, object_type = row['subject_type'], row['object_type']
+    new_sentence = ''
+    new_sentence += subject_word + '[SEP]' + object_word + '[SEP]'
 
-#     new_sentence = ''
+    if subject_start_idx < object_start_idx:
+      new_sentence += sentence[:subject_start_idx]
+      new_sentence += f'<S:{subject_type}>'
+      new_sentence += sentence[subject_start_idx:subject_end_idx+1]
+      new_sentence += f'</S:{subject_type}>'
+      new_sentence += sentence[subject_end_idx+1:object_start_idx]
+      new_sentence += f'<O:{object_type}>'
+      new_sentence += sentence[object_start_idx:object_end_idx+1]
+      new_sentence += f'</O:{object_type}>'
+      new_sentence += sentence[object_end_idx+1:]
+    else:
+      new_sentence += sentence[:object_start_idx]
+      new_sentence += f'<O:{object_type}>'
+      new_sentence += sentence[object_start_idx:object_end_idx+1]
+      new_sentence += f'</O:{object_type}>'
+      new_sentence += sentence[object_end_idx+1:subject_start_idx]
+      new_sentence += f'<S:{subject_type}>'
+      new_sentence += sentence[subject_start_idx:subject_end_idx+1]
+      new_sentence += f'</S:{subject_type}>'
+      new_sentence += sentence[subject_end_idx+1:]
 
-#     if subject_start_idx < object_start_idx:
-#       new_sentence += sentence[:subject_start_idx]
-#       new_sentence += f'<S:{subject_type}>'
-#       new_sentence += sentence[subject_start_idx:subject_end_idx+1]
-#       new_sentence += f'</S:{subject_type}>'
-#       new_sentence += sentence[subject_end_idx+1:object_start_idx]
-#       new_sentence += f'<O:{object_type}>'
-#       new_sentence += sentence[object_start_idx:object_end_idx+1]
-#       new_sentence += f'</O:{object_type}>'
-#       new_sentence += sentence[object_end_idx+1:]
-#     else:
-#       new_sentence += sentence[:object_start_idx]
-#       new_sentence += f'<O:{object_type}>'
-#       new_sentence += sentence[object_start_idx:object_end_idx+1]
-#       new_sentence += f'</O:{object_type}>'
-#       new_sentence += sentence[object_end_idx+1:subject_start_idx]
-#       new_sentence += f'<S:{subject_type}>'
-#       new_sentence += sentence[subject_start_idx:subject_end_idx+1]
-#       new_sentence += f'</S:{subject_type}>'
-#       new_sentence += sentence[subject_end_idx+1:]
+    sentences.append(new_sentence)
 
-#     sentences.append(new_sentence)
+  tokenized_sentences = tokenizer(
+      sentences,
+      return_tensors="pt",
+      padding=True,
+      truncation=True,
+      max_length=256,
+      add_special_tokens=True,
+      )
 
-#   tokenized_sentences = tokenizer(
-#       sentences,
-#       return_tensors="pt",
-#       padding=True,
-#       truncation=True,
-#       max_length=256,
-#       add_special_tokens=True,
-#       )
-
-#   return tokenized_sentences
+  return tokenized_sentences
 
 def label_to_num(label):
   num_label = []

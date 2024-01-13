@@ -58,22 +58,8 @@ if __name__ == '__main__':
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
   # 스페셜 토큰 추가
-  # tokenizer.add_special_tokens({'additional_special_tokens': ['<S:ORG>', 
-  #                                                             '<S:PER>', 
-  #                                                             '</S:ORG>', 
-  #                                                             '</S:PER>',  
-  #                                                             '<O:ORG>', 
-  #                                                             '<O:PER>', 
-  #                                                             '<O:POH>', 
-  #                                                             '<O:LOC>', 
-  #                                                             '<O:DAT>', 
-  #                                                             '<O:NOH>', 
-  #                                                             '</O:ORG>', 
-  #                                                             '</O:PER>', 
-  #                                                             '</O:POH>', 
-  #                                                             '</O:LOC>', 
-  #                                                             '</O:DAT>', 
-  #                                                             '</O:NOH>']})
+  special_token_dict = {'additional_special_tokens': ['<S:ORG>','<S:PER>','</S:ORG>','</S:PER>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']}
+  tokenizer.add_special_tokens(special_token_dict)
 
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
