@@ -31,7 +31,7 @@ def tokenized_dataset(dataset, tokenizer):
       return_tensors="pt",
       padding=True,
       truncation=True,
-      max_length=256,
+      max_length=180,
       add_special_tokens=True,
       )
   return tokenized_sentences
@@ -77,6 +77,7 @@ def tokenized_dataset_pretrain(dataset, tokenizer):
 
 def load_data(dataset_dir):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
+  pd.set_option('mode.chained_assignment',  None)
   pd_dataset = pd.read_csv(dataset_dir)
   cleaned_dataset = train_data_preprocessing(pd_dataset)
   dataset = preprocessing_dataset(cleaned_dataset)
@@ -88,7 +89,8 @@ def load_test_dataset(dataset_dir, tokenizer):
     test dataset을 불러온 후,
     tokenizing 합니다.
   """
-  test_dataset = load_data(dataset_dir)
+  pd_dataset = pd.read_csv(dataset_dir)
+  test_dataset = preprocessing_dataset(pd_dataset)
   test_label = list(map(int,test_dataset['label'].values))
   # tokenizing dataset
   tokenized_test = tokenized_dataset(test_dataset, tokenizer)
