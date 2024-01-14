@@ -125,7 +125,7 @@ def preprocessing(df):
 #     df = pd.concat([df, relation_sample])
 #     df = df.sample(frac=1, random_state=42)
 
-    return df
+#     return df
 
 df, test = pd.read_csv("./train/train.csv"), pd.read_csv("./test/test.csv")
 train, dev = train_dev_split(df)
