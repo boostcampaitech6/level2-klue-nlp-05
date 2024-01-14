@@ -1,3 +1,5 @@
+from preprocessing import train_data_preprocessing
+from tqdm.auto import tqdm
 import pickle as pickle
 import pandas as pd
 import ast
@@ -60,10 +62,24 @@ def tokenized_dataset_xlm(dataset, tokenizer):
       )
   return tokenized_sentences
 
+def tokenized_dataset_pretrain(dataset, tokenizer):
+  """ tokenizer에 따라 sentence를 tokenizing 합니다."""
+  data = []
+  for _, item in tqdm(dataset.iterrows(), desc="tokenizing", total=len(dataset)):
+    subj = item["subject_entity"]
+    obj = item["object_entity"]
+
+    concat_entity = tokenizer.sep_token.join([subj, obj])
+    # roberta 모델은 token_type_ids 레이어를 사용하지 않습니다.
+    output = tokenizer(concat_entity, item["sentence"], padding=True, truncation=True, max_length=256, add_special_tokens=True)
+    data.append(output)
+  return data
+
 def load_data(dataset_dir):
   """ csv 파일을 경로에 맡게 불러 옵니다. """
   pd_dataset = pd.read_csv(dataset_dir)
-  dataset = preprocessing_dataset(pd_dataset)
+  cleaned_dataset = train_data_preprocessing(pd_dataset)
+  dataset = preprocessing_dataset(cleaned_dataset)
   
   return dataset
 
@@ -77,6 +93,20 @@ def load_test_dataset(dataset_dir, tokenizer):
   # tokenizing dataset
   tokenized_test = tokenized_dataset(test_dataset, tokenizer)
   return test_dataset['id'], tokenized_test, test_label
+
+def load_pretrain_data(dataset_dir1, dataset_dir2):
+  train_dataset = pd.read_csv(dataset_dir1)
+  test_dataset = pd.read_csv(dataset_dir2)
+
+  # remove duplicated data
+  pd.set_option('mode.chained_assignment',  None)
+  train_dataset = train_data_preprocessing(train_dataset)
+
+  # train, test data concat
+  pretrain_dataset = pd.concat([train_dataset, test_dataset])
+  dataset = preprocessing_dataset(pretrain_dataset)
+  
+  return dataset
 
 def label_to_num(label):
   num_label = []
