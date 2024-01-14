@@ -32,7 +32,7 @@ if __name__ == '__main__':
   set_seed(conf.utils.seed)
 
   wandb.login()
-  wandb.init(project=conf.wandb.project_name)
+  wandb.init(project=conf.wandb.project_name, entity='level2-klue-nlp-05')
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
@@ -63,7 +63,10 @@ if __name__ == '__main__':
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  if conf.model.use_tapt_model:
+    model =  AutoModelForSequenceClassification.from_pretrained(conf.path.tapt_model_path, config=model_config)
+  else:
+    model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
   print(model.config)
   model.parameters
   model.to(device)
