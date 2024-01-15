@@ -28,7 +28,7 @@ class CustomModel(nn.Module):
         idx = torch.arange(input_ids.size(0)).to(input_ids.device)
         ss_emb = pooled_output[idx, ss]
         os_emb = pooled_output[idx, os]
-        h = torch.cat((cls_emb, ss_emb, os_emb), dim=-1)
+        h = torch.cat((ss_emb, os_emb, cls_emb), dim=-1)
         logits = self.classifier(h)
         outputs = (logits,)
         if labels is not None:
