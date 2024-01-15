@@ -81,7 +81,7 @@ def tokenized_dataset(dataset, tokenizer):
                               return_tensors="pt",
                               padding=True,
                               truncation=True,
-                              max_length=256,
+                              max_length=180,
                               add_special_tokens=True,
                               )
     input_ids = encoded_inputs['input_ids'][0]
@@ -94,7 +94,7 @@ def tokenized_dataset(dataset, tokenizer):
       return_tensors="pt",
       padding=True,
       truncation=True,
-      max_length=256,
+      max_length=180,
       add_special_tokens=True,
       )
   
