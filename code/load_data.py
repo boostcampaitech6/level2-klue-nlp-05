@@ -41,7 +41,7 @@ def load_test_dataset(dataset_dir, tokenizer):
 def tokenized_dataset(dataset, tokenizer):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   sentences = []
-  entity_token_ids = []
+  ss, os = torch.tensor([], dtype=torch.int32), torch.tensor([], dtype=torch.int32)
 
   for idx, row in dataset.iterrows():
     sentence = row['sentence']
@@ -75,7 +75,19 @@ def tokenized_dataset(dataset, tokenizer):
       new_sentence += sentence[subject_end_idx+1:]
 
     sentences.append(new_sentence)
-    entity_token_ids.append((tokenizer.convert_tokens_to_ids(f'<S:{subject_type}>'), tokenizer.convert_tokens_to_ids(f'<O:{object_type}>')))
+
+    encoded_inputs = tokenizer(
+                              new_sentence,
+                              return_tensors="pt",
+                              padding=True,
+                              truncation=True,
+                              max_length=256,
+                              add_special_tokens=True,
+                              )
+    input_ids = encoded_inputs['input_ids'][0]
+    special_token_ids = tokenizer.convert_tokens_to_ids([f'<S:{subject_type}>', f'<O:{object_type}>'])
+    ss = torch.cat((ss, (input_ids == special_token_ids[0]).nonzero(as_tuple=True)[0]))
+    os = torch.cat((ss, (input_ids == special_token_ids[1]).nonzero(as_tuple=True)[0]))
 
   tokenized_sentences = tokenizer(
       sentences,
@@ -86,7 +98,8 @@ def tokenized_dataset(dataset, tokenizer):
       add_special_tokens=True,
       )
   
-  tokenized_sentences['entity_token_ids'] = torch.tensor(entity_token_ids)
+  tokenized_sentences['ss'] = ss
+  tokenized_sentences['os'] = os
 
   return tokenized_sentences
 
