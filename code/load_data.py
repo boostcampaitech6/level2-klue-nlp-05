@@ -41,7 +41,7 @@ def load_test_dataset(dataset_dir, tokenizer):
 def tokenized_dataset(dataset, tokenizer):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   sentences = []
-  ss, os = torch.tensor([], dtype=torch.int32), torch.tensor([], dtype=torch.int32)
+  ss, os = [], []
 
   for idx, row in dataset.iterrows():
     sentence = row['sentence']
@@ -51,7 +51,8 @@ def tokenized_dataset(dataset, tokenizer):
     subject_type, object_type = row['subject_type'], row['object_type']
 
     new_sentence = ''
-    new_sentence += subject_word + '-' + object_word + '[SEP]'
+    new_sentence += subject_word + '[SEP]'
+    new_sentence += object_word + '[SEP]'
 
     if subject_start_idx < object_start_idx:
       new_sentence += sentence[:subject_start_idx]
@@ -77,17 +78,23 @@ def tokenized_dataset(dataset, tokenizer):
     sentences.append(new_sentence)
 
     encoded_inputs = tokenizer(
-                              new_sentence,
-                              return_tensors="pt",
-                              padding=True,
-                              truncation=True,
-                              max_length=180,
-                              add_special_tokens=True,
-                              )
-    input_ids = encoded_inputs['input_ids'][0]
-    special_token_ids = tokenizer.convert_tokens_to_ids([f'<S:{subject_type}>', f'<O:{object_type}>'])
-    ss = torch.cat((ss, (input_ids == special_token_ids[0]).nonzero(as_tuple=True)[0]))
-    os = torch.cat((ss, (input_ids == special_token_ids[1]).nonzero(as_tuple=True)[0]))
+        new_sentence,
+        truncation=True,
+        max_length=180,
+        add_special_tokens=True,
+        )
+    input_ids = encoded_inputs['input_ids']
+    subject_token_id, object_token_id = tokenizer.convert_tokens_to_ids([f'<S:{subject_type}>', f'<O:{object_type}>'])
+    
+    if subject_token_id in input_ids:
+      ss.append(input_ids.index(subject_token_id))
+    else:
+      ss.append(len(input_ids)-1)
+
+    if object_token_id in input_ids:
+      os.append(input_ids.index(object_token_id))
+    else:
+      os.append(len(input_ids)-1)
 
   tokenized_sentences = tokenizer(
       sentences,
@@ -98,8 +105,8 @@ def tokenized_dataset(dataset, tokenizer):
       add_special_tokens=True,
       )
   
-  tokenized_sentences['ss'] = ss
-  tokenized_sentences['os'] = os
+  tokenized_sentences['ss'] = torch.tensor(ss, dtype=torch.long)
+  tokenized_sentences['os'] = torch.tensor(os, dtype=torch.long)
 
   return tokenized_sentences
 
