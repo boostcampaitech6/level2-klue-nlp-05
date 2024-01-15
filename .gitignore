@@ -2,3 +2,5 @@
 code/results/*
 code/wandb/*
 code/prediction/*
+code/best_model
+code/tapt/*
