@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, AutoModel, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
 from omegaconf import OmegaConf
 from load_data import RE_Dataset, load_test_dataset, num_to_label
@@ -58,12 +58,12 @@ if __name__ == '__main__':
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
   # 스페셜 토큰 추가
-  special_token_dict = {'additional_special_tokens': ['<S:ORG>','<S:PER>','</S:ORG>','</S:PER>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']}
-  tokenizer.add_special_tokens(special_token_dict)
+  special_tokens = ['<S:ORG>','<S:PER>','</S:ORG>','</S:PER>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
-  model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
+  model = AutoModel.from_pretrained(args.model_dir)
   model.parameters
   model.to(device)
 

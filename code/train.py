@@ -1,7 +1,8 @@
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, Trainer, TrainingArguments
 from omegaconf import OmegaConf
 from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
 from metrics import compute_metrics
+from model import CustomModel
 
 import numpy as np
 import argparse
@@ -36,8 +37,8 @@ if __name__ == '__main__':
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
   # 스페셜 토큰 추가
-  special_token_dict = {'additional_special_tokens': ['<S:ORG>','<S:PER>','</S:ORG>','</S:PER>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']}
-  tokenizer.add_special_tokens(special_token_dict)
+  special_tokens = ['<S:ORG>','<S:PER>','</S:ORG>','</S:PER>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   # load dataset
   train_dataset = load_data(conf.path.train_path)
@@ -59,12 +60,9 @@ if __name__ == '__main__':
   print(device)
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  model_config.num_labels = 30
-
-  model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  model = CustomModel(conf, config=model_config)
   # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
-  model.resize_token_embeddings(len(tokenizer))
-  print(model.config)
+  model.encoder.resize_token_embeddings(len(tokenizer))
   model.parameters
   
   model.to(device)
@@ -104,6 +102,7 @@ if __name__ == '__main__':
 
   # train model
   trainer.train()
-  model.save_pretrained('./best_model')
+  save_path = f"./best_model/pytorch_model.pt"
+  torch.save(model.state_dict(), save_path)
   
   wandb.finish()
