@@ -1,0 +1,31 @@
+path:
+  train_path: ../dataset/train/train_final.csv
+  dev_path: ../dataset/train/train_final.csv
+  test_path: ../dataset/test/test_final.csv
+
+model:
+  model_name: klue/bert-base
+  last_dense_layer_dropout_prob: 0.1
+  max_seq_length: 512
+  add_entity_token: True
+
+
+train:
+  epochs: 5
+  batch_size: 32
+  learning_rate: 5e-5
+  save_steps: 500
+  warmup_steps: 500
+  weight_decay: 0.01
+  logging_steps: 100
+  eval_steps: 500
+  fp16: True
+
+utils:
+  seed: 42
+  top_k : 5
+
+wandb:
+  project_name: shingeun
+  curr_ver: 1.2.9 (add_entity_token & hidden_state_concat model)
+

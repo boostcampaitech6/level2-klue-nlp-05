@@ -1,14 +1,14 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer,AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 from dataset_utils import load_test_dataset, num_to_label
+from add_entity_token import *
 from train import set_seed
 from datasets import RE_Dataset
 from tqdm import tqdm
-
 import torch.nn.functional as F
 import pandas as pd
 import torch
-
 import numpy as np
 import argparse
 
@@ -24,14 +24,14 @@ def inference(model, tokenized_sent, device):
   output_prob = []
   for i, data in enumerate(tqdm(dataloader)):
     with torch.no_grad():
-      outputs = model(
+      logits = model(
           input_ids=data['input_ids'].to(device),
           attention_mask=data['attention_mask'].to(device),
-          token_type_ids=data['token_type_ids'].to(device)
-          )
-    logits = outputs[0]
-    prob = F.softmax(logits, dim=-1).detach().cpu().numpy()
-    logits = logits.detach().cpu().numpy()
+          ss = data['ss'].to(device),
+          os = data['os'].to(device))
+      
+    prob = F.softmax(logits[0], dim=-1).detach().cpu().numpy()
+    logits = logits[0].detach().cpu().numpy()
     result = np.argmax(logits, axis=-1)
 
     output_pred.append(result)
@@ -42,8 +42,8 @@ def inference(model, tokenized_sent, device):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="base_config")
-  parser.add_argument('--model_dir', "-m", type=str, default="./best_model")
+  parser.add_argument("--config", "-c", type=str, default="1.2.8_config")
+  parser.add_argument('--model_dir', "-m", type=str, default="./klue_bert-base_Max-epoch:5_Batch-size:32")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
@@ -57,17 +57,25 @@ if __name__ == '__main__':
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
+  new_tokens = ['[PER]', '[ORG]', '[DAT]', '[LOC]', '[POH]', '[NOH]']
+  tokenizer.add_tokens(new_tokens)
 
   ## load my model
-  MODEL_NAME = args.model_dir # model dir.
-  model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
+  MODEL_NAME = conf.model.model_name # model dir.
+  model_config =  AutoConfig.from_pretrained(MODEL_NAME)
+  model = Custom_Model(conf, config=model_config)
+  model.encoder.resize_token_embeddings(len(tokenizer))
+  model.load_state_dict(torch.load(args.model_dir))
   model.parameters
   model.to(device)
 
   ## load test datset
   test_dataset_dir = conf.path.test_path
-  test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer)
-  Re_test_dataset = RE_Dataset(test_dataset ,test_label)
+
+  test_dataset = pd.read_csv(test_dataset_dir)
+  test_label = list(map(int,test_dataset['label'].values))
+  tokenized_test = Processor(conf, tokenizer).read(test_dataset)
+  Re_test_dataset = RE_Dataset(tokenized_test ,test_label)
 
   ## predict answer
   pred_answer, output_prob = inference(model, Re_test_dataset, device) # model에서 class 추론
@@ -76,7 +84,7 @@ if __name__ == '__main__':
   ## make csv file with predicted answer
   #########################################################
   # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
-  output = pd.DataFrame({'id':test_id,'pred_label':pred_answer,'probs':output_prob,})
+  output = pd.DataFrame({'id':test_dataset['id'],'pred_label':pred_answer,'probs':output_prob,})
 
   output.to_csv('./prediction/submission.csv', index=False) # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
   #### 필수!! ##############################################
