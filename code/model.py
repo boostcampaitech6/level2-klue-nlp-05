@@ -16,7 +16,7 @@ class CustomModel(nn.Module):
             nn.Linear(hidden_size, 12),
             nn.ReLU(),
             nn.Dropout(p=0.1),
-            nn.Linear(hidden_size, 30)
+            nn.Linear(12, 30)
         )
 
     @autocast()
