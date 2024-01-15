@@ -2,3 +2,4 @@
 code/results/*
 code/wandb/*
 code/best_model/pytorch_model.bin
+*.pt

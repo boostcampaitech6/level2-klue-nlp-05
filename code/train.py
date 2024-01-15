@@ -37,7 +37,7 @@ if __name__ == '__main__':
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
   # 스페셜 토큰 추가
-  special_tokens = ['<S:ORG>','<S:PER>','</S:ORG>','</S:PER>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
   tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   # load dataset
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
   # train model
   trainer.train()
-  save_path = f"./best_model/pytorch_model.pt"
+  save_path = f"./best_model/model.pt"
   torch.save(model.state_dict(), save_path)
   
   wandb.finish()
