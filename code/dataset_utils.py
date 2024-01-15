@@ -94,3 +94,25 @@ def num_to_label(label):
     origin_label.append(dict_num_to_label[v])
   
   return origin_label
+
+def label_to_num_binary(label):
+  num_label = []
+  for v in label:
+    if v == 'no_relation':
+      num_label.append(0)
+    else:
+      num_label.append(1)
+  
+  return num_label
+
+def num_to_label_binary(label):
+  """
+    숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다.
+  """
+  origin_label = []
+  with open('./pickle/dict_num_to_label.pkl', 'rb') as f:
+    dict_num_to_label = pickle.load(f)
+  for v in label:
+    origin_label.append(dict_num_to_label[v])
+  
+  return origin_label

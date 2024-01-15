@@ -54,9 +54,7 @@ if __name__ == '__main__':
     set_seed(conf.utils.seed)
     
     # pair_list에 entity pair의 list를 저장하고 train set을 pair별로 분리
-    pair_list_train = ['PER-DAT', 'ORG-PER', 'PER-ORG', 'PER-POH', 
-                       'ORG-ORG', 'ORG-DAT', 'ORG-LOC', 'ORG-POH', 
-                       'ORG-NOH', 'PER-NOH', 'PER-POH', 'PER-PER']
+    pair_list_train = ['PER-DAT', 'ORG-PER', 'PER-ORG', 'PER-POH']
     pair_separater(conf.path.train_path)
 
     # load model and tokenizer
@@ -87,15 +85,16 @@ if __name__ == '__main__':
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print(device)
 
-        # setting model hyperparameter
-        model_config = AutoConfig.from_pretrained(MODEL_NAME)
-        model_config.num_labels = 30
 
         for fold, (train_idx, dev_idx) in enumerate(skf.split(np.zeros(len(RE_train_dataset)), RE_train_dataset.labels)):
             wandb.login()
             wandb.init(project=conf.wandb.project_name,
                        entity='level2-klue-nlp-05',
                        name=f'{conf.wandb.curr_ver} ({pair} - Fold:{fold})')
+            
+            # setting model hyperparameter
+            model_config = AutoConfig.from_pretrained(MODEL_NAME)
+            model_config.num_labels = 30
             model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME,
                                                                        config=model_config)
             print(model.config)
@@ -118,10 +117,12 @@ if __name__ == '__main__':
                 warmup_steps=conf.train.warmup_steps,                # number of warmup steps for learning rate scheduler
                 weight_decay=conf.train.weight_decay,               # strength of weight decay
                 logging_dir='./logs',            # directory for storing logs
-                evaluation_strategy='epoch', # evaluation strategy to adopt during training
+                logging_steps=conf.train.logging_steps,
+                evaluation_strategy='steps', # evaluation strategy to adopt during training
                                             # `no`: No evaluation during training.
                                             # `steps`: Evaluate every `eval_steps`.
                                             # `epoch`: Evaluate every end of epoch.
+                eval_steps=conf.train.eval_steps,
                 load_best_model_at_end = True,
                 metric_for_best_model="micro f1 score",
                 report_to="wandb",
@@ -137,6 +138,6 @@ if __name__ == '__main__':
 
             # train model
             trainer.train()
-            model.save_pretrained(f'./best_model/{pair}/{fold}')
+            model.save_pretrained(f'./best_model/{pair}/{fold}_true_labels')
             
             wandb.finish()
