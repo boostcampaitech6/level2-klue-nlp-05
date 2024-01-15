@@ -25,7 +25,7 @@ def set_seed(seed:int = 42):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="1.2.12_config")
+  parser.add_argument("--config", "-c", type=str, default="1.2.14_config")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
@@ -42,27 +42,18 @@ if __name__ == '__main__':
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = pd.read_csv("../dataset/train/train_final.csv")
+  train_dataset = pd.read_csv(conf.path.train_path)
+  dev_dataset =  pd.read_csv(conf.path.dev_path)
   train_label = label_to_num(train_dataset['label'].values)
+  dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
-  if 'roberta' in MODEL_NAME:
-    if conf.model.add_entity_token:
-      tokenized_train = Processor_roberta(conf, tokenizer).read(train_dataset)
-    else:
-      tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
-  else:
-    if conf.model.add_entity_token:
-      tokenized_train = Processor(conf, tokenizer).read(train_dataset)
-    else:
-      tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-
+  tokenized_train = Processor(conf, tokenizer).read(train_dataset)
+  tokenized_dev = Processor(conf, tokenizer).read(dev_dataset)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  
-  # Split train dataset into train, valid.
-  RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
+  RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
@@ -115,7 +106,7 @@ if __name__ == '__main__':
   trainer.train()
   
   if conf.model.add_entity_token:
-    save_path = f"./{conf.model.model_name.replace('/', '_')}_Max-epoch:{conf.train.epochs}_Batch-size:{conf.train.batch_size}"
+    save_path = f"./model_save/{conf.model.model_name.replace('/', '_')}_Max-epoch:{conf.train.epochs}_Batch-size:{conf.train.batch_size}"
     torch.save(model.state_dict(), save_path)
   else:
     model.save_pretrained('./best_model')

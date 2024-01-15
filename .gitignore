@@ -2,3 +2,4 @@
 code/results/*
 code/wandb/*
 exp/wandb/*
+code/model_save/*

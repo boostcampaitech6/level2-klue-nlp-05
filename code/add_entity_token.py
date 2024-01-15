@@ -43,7 +43,7 @@ class Processor:
         super().__init__()
         self.args = args
         self.tokenizer = tokenizer
-        self.new_tokens = ['[PER]', '[ORG]', '[DAT]', '[LOC]', '[POH]', '[NOH]']
+        self.new_tokens = ['[PER]', '[ORG]', '[DAT]', '[LOC]', '[POH]', '[NOH]', '[SE]','[/SE]','[OE]','[/OE]']
         self.tokenizer.add_tokens(self.new_tokens)
         self.LABEL_TO_ID = {'no_relation': 0, 'org:top_members/employees': 1, 'org:members': 2, 'org:product': 3, 'per:title': 4, 'org:alternate_names': 5, 'per:employee_of': 6, \
                 'org:place_of_headquarters': 7, 'per:product': 8, 'org:number_of_employees/members': 9, 'per:children': 10, 'per:place_of_residence': 11, 'per:alternate_names': 12, \
@@ -57,27 +57,31 @@ class Processor:
                 index = idx
                 return idx
             
-    def add_marker_tokens(self, sentence, subj_type, obj_type, ss, se, os, oe):
+    def add_marker_tokens(self, sentence, subj_word, obj_word, subj_type, obj_type, ss, se, os, oe):
         subj_type , obj_type = f"[{subj_type}]", f"[{obj_type}]"
         new_sentence=''
+
+        relation_setnece = f" [SE] * {subj_type} * {subj_word} [/SE] 와 [OE] ^ {obj_type} ^ {obj_word} [/OE] 의 관계는 무엇인가? [SEP] "
+        new_sentence += relation_setnece
+
         if ss < os:
             new_sentence += sentence[ :ss]
-            new_sentence += f"@*{subj_type}*{sentence[ss:se+1]}@"
+            new_sentence += f" [SE] * {subj_type} * {sentence[ss:se+1]} [/SE] "
             new_sentence += sentence[se+1:os]
-            new_sentence += f"#^{obj_type}^{sentence[os:oe+1]}#"
+            new_sentence += f" [OE] ^ {obj_type} ^ {sentence[os:oe+1]} [/OE] " 
             new_sentence += sentence[oe+1:]
         else:
             new_sentence += sentence[ :os]
-            new_sentence += f"#^{obj_type}^{sentence[os:oe+1]}#"
+            new_sentence += f" [OE] ^ {obj_type} ^ {sentence[os:oe+1]} [/OE] "
             new_sentence += sentence[oe+1:ss]
-            new_sentence += f"@*{subj_type}*{sentence[ss:se+1]}@"
+            new_sentence += f" [SE] * {subj_type} * {sentence[ss:se+1]} '[/SE]' "
             new_sentence += sentence[se+1:]
 
         sents = self.tokenizer.tokenize(new_sentence)
-        new_ss= self.token_location(sents,['@',"*"])
-        new_os= self.token_location(sents,['#',"^"])
+        new_ss= self.token_location(sents,self.tokenizer.tokenize(' [SE] '))
+        new_os= self.token_location(sents,self.tokenizer.tokenize(' [OE] '))
 
-        return new_sentence, new_ss +1 , new_os +1
+        return new_sentence , new_ss+1, new_os+1
     
     def read(self, train_dataset):
 
@@ -88,11 +92,12 @@ class Processor:
             ss, se = int(d['subject_start_idx']), int(d['subject_end_idx'])
             os, oe = int(d['object_start_idx']), int(d['object_end_idx'])
 
-            new_sentence, new_ss, new_os= self.add_marker_tokens(d['sentence'], d['subject_type'], d['object_type'], ss, se, os, oe)
+            new_sentence, new_ss, new_os= self.add_marker_tokens(d['sentence'], d['subject_word'], d['object_word'], d['subject_type'], d['object_type'], ss, se, os, oe)
             new_sentence_list.append(new_sentence)
             new_ss_list.append(new_ss)
             new_os_list.append(new_os)
-            
+
+
         tokenized_sentences = self.tokenizer(
         new_sentence_list,
         return_tensors="pt",
