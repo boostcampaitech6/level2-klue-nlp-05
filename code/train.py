@@ -23,7 +23,7 @@ def set_seed(seed:int = 42):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="base_config")
+  parser.add_argument("--config", "-c", type=str, default="roberta_config")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
