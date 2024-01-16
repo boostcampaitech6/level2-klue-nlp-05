@@ -1,10 +1,14 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, DataCollatorWithPadding
 from omegaconf import OmegaConf
 from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
+from torch.optim.lr_scheduler import OneCycleLR
+from custom_trainer import CustomTrainer
 from datasets import RE_Dataset
 from metrics import compute_metrics
 
+import torch.optim as optim
 import numpy as np
+import transformers
 import argparse
 import random
 import torch
@@ -70,7 +74,14 @@ if __name__ == '__main__':
   print(model.config)
   model.parameters
   model.to(device)
-  
+
+  # set optimzier & lr scheduler
+  steps_per_epoch = len(RE_train_dataset) // (conf.train.batch_size * 8) if len(RE_train_dataset) % conf.train.batch_size == 0 else len(RE_train_dataset) // (conf.train.batch_size * 8) + 1
+  optimizer = transformers.AdamW(model.parameters(), lr=conf.train.learning_rate)
+  scheduler = OneCycleLR(optimizer, max_lr=conf.train.learning_rate, steps_per_epoch=steps_per_epoch,
+                         pct_start=0.3, epochs=conf.train.epochs, anneal_strategy="cos",
+                         div_factor=1e100, final_div_factor=1)
+
   # 사용한 option 외에도 다양한 option들이 있습니다.
   # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
   training_args = TrainingArguments(
@@ -81,7 +92,6 @@ if __name__ == '__main__':
     learning_rate=conf.train.learning_rate,               # learning_rate
     per_device_train_batch_size=conf.train.batch_size,  # batch size per device during training
     per_device_eval_batch_size=conf.train.batch_size,   # batch size for evaluation
-    warmup_steps=conf.train.warmup_steps,                # number of warmup steps for learning rate scheduler
     weight_decay=conf.train.weight_decay,               # strength of weight decay
     logging_dir='./logs',            # directory for storing logs
     logging_steps=conf.train.logging_steps,              # log saving step.
@@ -90,17 +100,19 @@ if __name__ == '__main__':
                                 # `steps`: Evaluate every `eval_steps`.
                                 # `epoch`: Evaluate every end of epoch.
     eval_steps=conf.train.eval_steps,            # evaluation step.
-    load_best_model_at_end = True,
+    load_best_model_at_end=True,
     metric_for_best_model="micro f1 score",
     report_to="wandb",
-    fp16=conf.train.fp16
+    fp16=conf.train.fp16,
+    gradient_accumulation_steps=8
   )
-  trainer = Trainer(
+  trainer = CustomTrainer(
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
     eval_dataset=RE_dev_dataset,
     data_collator=data_collator,
+    optimizers=(optimizer, scheduler),
     compute_metrics=compute_metrics
   )
 
