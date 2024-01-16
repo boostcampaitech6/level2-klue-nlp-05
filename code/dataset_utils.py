@@ -31,7 +31,7 @@ def tokenized_dataset(dataset, tokenizer):
       return_tensors="pt",
       padding=True,
       truncation=True,
-      max_length=195,
+      max_length=256,
       add_special_tokens=True,
       )
   return tokenized_sentences
