@@ -25,7 +25,7 @@ def set_seed(seed:int = 42):
 
 
 def pair_separater(file_path):
-    """csv에 ['entity pair']column을 기준으로 분리해서 
+    """csv에 ['entity pair']column을 기준으로 분리, ['label']이 'no_relation'인 것을 제외해서 
     1. 각 csv파일로 저장해주는 함수
 
     Args:
@@ -35,6 +35,7 @@ def pair_separater(file_path):
         list: pair의 리스트
     """
     df = pd.read_csv(file_path)
+    df = df[df['label']!= 'no_relation']
     grouped = df.groupby('entity_pair')
     pair_list = []
     for name, group in grouped:
