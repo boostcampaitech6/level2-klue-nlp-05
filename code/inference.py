@@ -28,7 +28,6 @@ def inference(model, tokenized_sent, device):
       outputs = model(
           input_ids=data['input_ids'].to(device),
           attention_mask=data['attention_mask'].to(device),
-          token_type_ids=data['token_type_ids'].to(device), 
           ss = data['ss'].to(device),
           os = data['os'].to(device)
           )
@@ -45,7 +44,7 @@ def inference(model, tokenized_sent, device):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="base_config")
+  parser.add_argument("--config", "-c", type=str, default="xlm_config")
   parser.add_argument('--model_dir', "-m", type=str, default="./best_model/model.pt")
 
   args, _ = parser.parse_known_args()
