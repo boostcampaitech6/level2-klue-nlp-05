@@ -30,10 +30,12 @@ class CustomModel(nn.Module):
         self.encoder = AutoModel.from_pretrained(args.model.model_name, config=config)
         hidden_size = config.hidden_size
         self.loss_fnt = FocalLoss()
-        self.classifier = nn.Sequential(
+        self.fc_layer = nn.Sequential(
             nn.Linear(2 * hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.1)
+        )
+        self.classifier = nn.Sequential(
             nn.Linear(hidden_size, 30)
         )
 
@@ -42,14 +44,18 @@ class CustomModel(nn.Module):
         outputs = self.encoder(
             input_ids,
             attention_mask=attention_mask,
+            token_type_ids=token_type_ids
         )
         pooled_output = outputs[0]
+        cls_emb = pooled_output[:, 0]
         idx = torch.arange(input_ids.size(0)).to(input_ids.device)
         ss_emb = pooled_output[idx, ss]
         os_emb = pooled_output[idx, os]
-        h = torch.cat((ss_emb, os_emb), dim=-1)
+        fc_output = self.fc_layer(torch.cat((ss_emb, os_emb), dim=-1))
+        h = self.fc_layer(torch.cat((fc_output, cls_emb), dim=-1))
         logits = self.classifier(h)
         outputs = (logits,)
+        
         if labels is not None:
             loss = self.loss_fnt(logits.float(), labels)
             outputs = (loss,) + outputs
