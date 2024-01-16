@@ -44,8 +44,8 @@ def no_relation_delete(train_path, dev_path):
     new_train_df = new_train_df.sort_values(by='id', ascending=True)
     new_dev_df = new_dev_df.sort_values(by='id', ascending=True)
     
-    new_train_df.to_csv('../dataset/train/general_true_labels.csv')
-    new_dev_df.to_csv('../dataset/test/general_true_labels.csv')
+    new_train_df.to_csv('../dataset/train/general_train_true_labels.csv')
+    new_dev_df.to_csv('../dataset/train/general_dev_true_labels.csv')
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
@@ -69,8 +69,8 @@ if __name__ == '__main__':
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = load_data('../dataset/train/general_true_labels.csv')
-  dev_dataset = load_data('../dataset/test/general_true_labels.csv')
+  train_dataset = load_data('../dataset/train/general_train_true_labels.csv')
+  dev_dataset = load_data('../dataset/train/general_dev_true_labels.csv')
 
   train_label = label_to_num(train_dataset['label'].values)
   dev_label = label_to_num(dev_dataset['label'].values)

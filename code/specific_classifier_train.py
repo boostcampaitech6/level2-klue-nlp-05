@@ -54,7 +54,8 @@ if __name__ == '__main__':
     set_seed(conf.utils.seed)
     
     # pair_list에 entity pair의 list를 저장하고 train set을 pair별로 분리
-    pair_list_train = ['PER-DAT', 'ORG-PER', 'PER-ORG', 'PER-POH']
+    pair_list_train = ['PER-DAT', 'ORG-PER', 'PER-ORG', 
+                       'PER-POH', 'ORG-ORG', 'PER-PER']
     pair_separater(conf.path.train_path)
 
     # load model and tokenizer

@@ -110,9 +110,10 @@ def num_to_label_binary(label):
     숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다.
   """
   origin_label = []
-  with open('./pickle/dict_num_to_label.pkl', 'rb') as f:
-    dict_num_to_label = pickle.load(f)
   for v in label:
-    origin_label.append(dict_num_to_label[v])
+    if v == 0:
+      origin_label.append('no_relation')
+    else:
+      origin_label.append('relation')
   
   return origin_label
