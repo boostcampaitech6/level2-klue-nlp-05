@@ -1,13 +1,35 @@
 import pandas as pd
 import ast
 
+def preprocessing(df):
+    # seperate subject_entity
+    subject_word, subject_start_idx, subject_end_idx, subject_type = [], [], [], []
+    for data in df['subject_entity']:
+        data = ast.literal_eval(data)
+        subject_word.append(data['word'])
+        subject_start_idx.append(data['start_idx'])
+        subject_end_idx.append(data['end_idx'])
+        subject_type.append(data['type'])
+    df['subject_word'], df['subject_start_idx'], df['subject_end_idx'], df['subject_type'] = subject_word, subject_start_idx, subject_end_idx, subject_type
+    # seperate object_entity
+    object_word, object_start_idx, object_end_idx, object_type = [], [], [], []
+    for data in df['object_entity']:
+        data = ast.literal_eval(data)
+        object_word.append(data['word'])
+        object_start_idx.append(data['start_idx'])
+        object_end_idx.append(data['end_idx'])
+        object_type.append(data['type'])
+    df['object_word'], df['object_start_idx'], df['object_end_idx'], df['object_type'] = object_word, object_start_idx, object_end_idx, object_type
+    # drop subject_entity, object_entity
+    df.drop(columns=['subject_entity', 'object_entity'], inplace=True)
+
+    return df
+
 def data_cleaning(df):
     # sentence, subject_word, object_word, label이 중복인 데이터 제거
     df.drop_duplicates(subset=['sentence', 'subject_word','object_word','label'], inplace=True)
     # sentence, subject_word, object_word가 중복이지만 레이블이 다른 데이터 -> no_relation 데이터 제거
     duplicates = df[df.duplicated(subset=['sentence', 'subject_word','object_word'], keep=False)]
-    # 그 외 outlier 데이터 제거 
-    df.drop(25094, inplace=True)
 
     return df
 
@@ -79,30 +101,6 @@ def data_cleaning(df):
 #     dev = dev.sample(frac=1, random_state=42)
 
 #     return train, dev
-
-def preprocessing(df):
-    # seperate subject_entity
-    subject_word, subject_start_idx, subject_end_idx, subject_type = [], [], [], []
-    for data in df['subject_entity']:
-        data = ast.literal_eval(data)
-        subject_word.append(data['word'])
-        subject_start_idx.append(data['start_idx'])
-        subject_end_idx.append(data['end_idx'])
-        subject_type.append(data['type'])
-    df['subject_word'], df['subject_start_idx'], df['subject_end_idx'], df['subject_type'] = subject_word, subject_start_idx, subject_end_idx, subject_type
-    # seperate object_entity
-    object_word, object_start_idx, object_end_idx, object_type = [], [], [], []
-    for data in df['object_entity']:
-        data = ast.literal_eval(data)
-        object_word.append(data['word'])
-        object_start_idx.append(data['start_idx'])
-        object_end_idx.append(data['end_idx'])
-        object_type.append(data['type'])
-    df['object_word'], df['object_start_idx'], df['object_end_idx'], df['object_type'] = object_word, object_start_idx, object_end_idx, object_type
-    # drop subject_entity, object_entity
-    df.drop(columns=['subject_entity', 'object_entity'], inplace=True)
-
-    return df
 
 # def data_augmentation(df):
 #     relation_sample = df[df['label']!='no_relation']
