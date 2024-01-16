@@ -57,7 +57,7 @@ if __name__ == '__main__':
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
-  new_tokens = ['[PER]', '[ORG]', '[DAT]', '[LOC]', '[POH]', '[NOH]','[SENT]','[/SENT]','[OENT]','[/OENT]']
+  new_tokens = ['[PER]', '[ORG]', '[DAT]', '[LOC]', '[POH]', '[NOH]', '[SE]','[/SE]','[OE]','[/OE]']
   tokenizer.add_tokens(new_tokens)
 
   ## load my model

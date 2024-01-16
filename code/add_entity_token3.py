@@ -5,24 +5,6 @@ from torch.cuda.amp import autocast
 import pandas as pd
 from tqdm import tqdm
 
-class FocalLoss(nn.Module):
-    def __init__(self, alpha=1, gamma=2, reduction='mean'):
-        super(FocalLoss, self).__init__()
-        self.alpha = alpha
-        self.gamma = gamma
-        self.reduction = reduction
-
-    def forward(self, inputs, targets):
-        CE_loss = F.cross_entropy(inputs, targets, reduction='none')
-        pt = torch.exp(-CE_loss)
-        F_loss = self.alpha * (1 - pt)**self.gamma * CE_loss
-
-        if self.reduction == 'mean':
-            return torch.mean(F_loss)
-        elif self.reduction == 'sum':
-            return torch.sum(F_loss)
-        else:
-            return F_loss
 
 class Custom_Model(nn.Module):
     def __init__(self, args, config):
@@ -30,9 +12,9 @@ class Custom_Model(nn.Module):
         self.args = args
         self.encoder = AutoModel.from_pretrained(args.model.model_name, config=config)
         hidden_size = config.hidden_size
-        self.loss_fnt = FocalLoss()
+        self.loss_fnt = nn.CrossEntropyLoss()
         self.classifier = nn.Sequential(
-            nn.Linear(2 * hidden_size, hidden_size),
+            nn.Linear(2 * hidden_size , hidden_size),
             nn.ReLU(),
             nn.Dropout(p=args.model.last_dense_layer_dropout_prob),
             nn.Linear(hidden_size, 30)
@@ -76,7 +58,7 @@ class Processor:
 
 
     def add_marker_tokens(self, sentence, subj_type, obj_type, ss, se, os, oe):
-        type_dic = { 'PER' : '인물', 'ORG' : '기관', 'LOC' : '장소', 'POH' : '기타 고유명사', 'DAT' : '날짜', 'NOH' : '수량'}
+        type_dic = { 'PER' : '인물', 'ORG' : '기관', 'LOC' : '장소', 'POH' : '기타 명사', 'DAT' : '날짜', 'NOH' : '수량'}
 
         new_sentence=''
 
@@ -100,15 +82,17 @@ class Processor:
         return new_sentence , new_ss+1, new_os+1
     
     def read(self, train_dataset):
-
+        type_dic = { 'PER' : '인물', 'ORG' : '기관', 'LOC' : '장소', 'POH' : '기타 명사', 'DAT' : '날짜', 'NOH' : '수량'}
         new_sentence_list=[]
+        question_list=[]
         new_ss_list=[]
         new_os_list=[]
         for _, d in tqdm(train_dataset.iterrows()):
             ss, se = int(d['subject_start_idx']), int(d['subject_end_idx'])
             os, oe = int(d['object_start_idx']), int(d['object_end_idx'])
-
             new_sentence, new_ss, new_os= self.add_marker_tokens(d['sentence'], d['subject_type'], d['object_type'], ss, se, os, oe)
+            question_sentence = f'[SE] {d["subject_word"]} ({type_dic[d["subject_type"]]}) [/SE]와 [OE] {d["object_word"]} ({type_dic[d["object_type"]]}) [/OE]의 관계는 무엇인가?'
+            question_list.append(question_sentence)
             new_sentence_list.append(new_sentence)
             new_ss_list.append(new_ss)
             new_os_list.append(new_os)
@@ -116,6 +100,7 @@ class Processor:
 
         tokenized_sentences = self.tokenizer(
         new_sentence_list,
+        question_list,
         return_tensors="pt",
         padding=True,
         truncation=True,

@@ -27,5 +27,5 @@ utils:
 
 wandb:
   project_name: shingeun
-  curr_ver: 1.2.14 (add_entity_token & hidden_state_concat model(type input changed)//klue/roberta-large)
+  curr_ver: 1.2.14 (add_entity_token & hidden_state_concat model(type input changed) & cls_emb_added//klue/roberta-large)
 

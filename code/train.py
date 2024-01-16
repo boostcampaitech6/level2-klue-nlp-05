@@ -99,7 +99,9 @@ if __name__ == '__main__':
     args=training_args,
     train_dataset=RE_train_dataset,
     eval_dataset=RE_dev_dataset,
-    compute_metrics=compute_metrics
+    compute_metrics=compute_metrics,
+    gradient_accumulation_steps=4,
+
   )
 
   # train model
