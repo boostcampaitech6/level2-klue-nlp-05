@@ -14,7 +14,7 @@ class Custom_Model(nn.Module):
         hidden_size = config.hidden_size
         self.loss_fnt = nn.CrossEntropyLoss()
         self.classifier = nn.Sequential(
-            nn.Linear(2 * hidden_size, hidden_size),
+            nn.Linear(3 * hidden_size, hidden_size),
             nn.ReLU(),
             nn.Dropout(p=args.model.last_dense_layer_dropout_prob),
             nn.Linear(hidden_size, 30)
@@ -27,10 +27,11 @@ class Custom_Model(nn.Module):
             attention_mask=attention_mask,
         )
         pooled_output = outputs[0]
+        CLS_emb = outputs[1]
         idx = torch.arange(input_ids.size(0)).to(input_ids.device)
         ss_emb = pooled_output[idx, ss]
         os_emb = pooled_output[idx, os]
-        h = torch.cat((ss_emb, os_emb), dim=-1)
+        h = torch.cat((CLS_emb, ss_emb, os_emb), dim=-1)
         logits = self.classifier(h)
         outputs = (logits,)
         if labels is not None:
@@ -50,16 +51,6 @@ class Processor:
                 'per:other_family': 13, 'per:colleagues': 14, 'per:origin': 15, 'per:siblings': 16, 'per:spouse': 17, 'org:founded': 18, 'org:political/religious_affiliation': 19, \
                 'org:member_of': 20, 'per:parents': 21, 'org:dissolved': 22, 'per:schools_attended': 23, 'per:date_of_death': 24, 'per:date_of_birth': 25, 'per:place_of_birth': 26, \
                 'per:place_of_death': 27, 'org:founded_by': 28, 'per:religion': 29}
-        
-    def token_location0(self, list1, list2):
-        i=0
-        for idx in range(len(list1) - len(list2) + 1):
-            if list1[idx:idx + len(list2)] == list2 and i ==1:
-                return idx
-            
-            if list1[idx:idx + len(list2)] == list2 and i ==0:
-                i+=1
-                pass
             
     def token_location(self, list1, list2):
         for idx in range(len(list1) - len(list2) + 1):
@@ -67,12 +58,9 @@ class Processor:
                 return idx
 
 
-    def add_marker_tokens(self, sentence, subj_word, obj_word, subj_type, obj_type, ss, se, os, oe):
+    def add_marker_tokens(self, sentence, subj_type, obj_type, ss, se, os, oe):
         subj_type , obj_type = f"[{subj_type}]", f"[{obj_type}]"
         new_sentence=''
-
-        relation_setnece = f" [SE] * {subj_type} * {subj_word} [/SE] 와 [OE] ^ {obj_type} ^ {obj_word} [/OE] 의 관계는 무엇인가? [SEP] "
-        new_sentence += relation_setnece
 
         if ss < os:
             new_sentence += sentence[ :ss]
@@ -102,7 +90,7 @@ class Processor:
             ss, se = int(d['subject_start_idx']), int(d['subject_end_idx'])
             os, oe = int(d['object_start_idx']), int(d['object_end_idx'])
 
-            new_sentence, new_ss, new_os= self.add_marker_tokens(d['sentence'], d['subject_word'], d['object_word'], d['subject_type'], d['object_type'], ss, se, os, oe)
+            new_sentence, new_ss, new_os= self.add_marker_tokens(d['sentence'], d['subject_type'], d['object_type'], ss, se, os, oe)
             new_sentence_list.append(new_sentence)
             new_ss_list.append(new_ss)
             new_os_list.append(new_os)

@@ -11,7 +11,7 @@ model:
 
 
 train:
-  epochs: 10
+  epochs: 7
   batch_size: 32
   learning_rate: 5e-5
   save_steps: 500
@@ -27,5 +27,5 @@ utils:
 
 wandb:
   project_name: shingeun
-  curr_ver: 1.2.14 (add_entity_token & hidden_state_concat model & Question //klue/roberta-large)
+  curr_ver: 1.2.14 (add_entity_token & hidden_state_concat model(type input changed)//klue/roberta-large)
 

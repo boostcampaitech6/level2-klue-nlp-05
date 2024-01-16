@@ -3,7 +3,7 @@ from omegaconf import OmegaConf
 from dataset_utils import load_data, label_to_num, tokenized_dataset
 from datasets import RE_Dataset
 from metrics import compute_metrics
-from add_entity_token import *
+from add_entity_token2 import *
 import numpy as np
 import pandas as pd
 import argparse
@@ -25,7 +25,7 @@ def set_seed(seed:int = 42):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="1.2.14_config")
+  parser.add_argument("--config", "-c", type=str, default="1.2.14_config1")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
