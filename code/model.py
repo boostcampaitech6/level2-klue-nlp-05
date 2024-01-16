@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from transformers import AutoModel
 from torch.cuda.amp import autocast
+import torch.nn.functional as F
 
 class FocalLoss(nn.Module):
     def __init__(self, alpha=1, gamma=2, reduction='mean'):
