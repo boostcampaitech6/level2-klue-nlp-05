@@ -1,6 +1,16 @@
 import pandas as pd
 import ast
 
+def data_cleaning(df):
+    # sentence, subject_word, object_word, label이 중복인 데이터 제거
+    df.drop_duplicates(subset=['sentence', 'subject_word','object_word','label'], inplace=True)
+    # sentence, subject_word, object_word가 중복이지만 레이블이 다른 데이터 -> no_relation 데이터 제거
+    duplicates = df[df.duplicated(subset=['sentence', 'subject_word','object_word'], keep=False)]
+    # 그 외 outlier 데이터 제거 
+    df.drop(25094, inplace=True)
+
+    return df
+
 # def train_dev_split(df):
 #     class_0_sample = df[df['label']=='no_relation'].sample(2315, random_state=42)
 #     class_1_sample = df[df['label']=='org:dissolved'].sample(5, random_state=42)
@@ -128,11 +138,19 @@ def preprocessing(df):
 
 #     return df
 
+
+# download dev set
 train, dev, test = pd.read_csv("./train/train.csv"), pd.read_csv("./train/dev.csv"), pd.read_csv("./test/test.csv")
-# train, dev = train_dev_split(df)
-# dev.to_csv("./train/dev.csv", index=False)
 train, dev, test = preprocessing(train), preprocessing(dev), preprocessing(test)
-# train = data_augmentation(train)
 train.to_csv("./train/train_final.csv", index=False)
 dev.to_csv('./train/dev_final.csv', index=False)
 test.to_csv("./test/test_final.csv", index=False)
+
+# split train, dev set
+# df, test = pd.read_csv("./train/train.csv"), pd.read_csv("./test/test.csv")
+# df, test = preprocessing(df), preprocessing(test)
+# df = data_cleaning(df)
+# train, dev = train_dev_split(df)
+# train.to_csv("./train/train_final.csv", index=False)
+# dev.to_csv('./train/dev_final.csv', index=False)
+# test.to_csv("./test/test_final.csv", index=False)
