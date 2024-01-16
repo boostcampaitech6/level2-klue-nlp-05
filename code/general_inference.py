@@ -88,21 +88,9 @@ if __name__ == '__main__':
   grouped = binary_output.groupby('pred_label')
 
   general_classify_ids = []
-
-  # for name, group in grouped:
-  #   if name == 'no_relation':
-  #     for idx, row in group.iterrows():
-  #       false_prob = row['probs'][0]
-  #       true_prob = row['probs'][1]
-  #       a = [true_prob/29 for _ in range(30)]
-  #       a[0] = false_prob
-  #       group.at[idx, 'probs'] = a
-  #     final_output = pd.concat([final_output, group])
-  #   else:
-  #     general_classify_ids = group['id']
-
   no_relation_rows = []
 
+  # if row['probs'][0] > "학습시 정확도":
   for idx, row in binary_output.iterrows():
     if row['probs'][0] > 0.75:
       false_prob = row['probs'][0]
