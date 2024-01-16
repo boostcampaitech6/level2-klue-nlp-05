@@ -40,10 +40,11 @@ class CustomModel(nn.Module):
         )
 
     @autocast()
-    def forward(self, input_ids, attention_mask=None, labels=None, ss=None, os=None):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None, labels=None, ss=None, os=None):
         outputs = self.encoder(
             input_ids,
-            attention_mask=attention_mask,
+            attention_mask=attention_mask, 
+            token_type_ids=token_type_ids
         )
         pooled_output = outputs[0]
         cls_emb = pooled_output[:, 0]
@@ -97,10 +98,11 @@ class CustomModel(nn.Module):
 #         )
 
 #     @autocast()
-#     def forward(self, input_ids, attention_mask=None, labels=None, ss=None, os=None):
+#     def forward(self, input_ids, attention_mask=None, token_type_ids=None, labels=None, ss=None, os=None):
 #         outputs = self.encoder(
 #             input_ids,
-#             attention_mask=attention_mask
+#             attention_mask=attention_mask, 
+#             token_type_ids=token_type_ids
 #         )
 #         pooled_output = outputs[0]
 #         cls_emb = pooled_output[:, 0]
