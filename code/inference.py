@@ -44,7 +44,7 @@ def inference(model, tokenized_sent, device):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="roberta_config")
+  parser.add_argument("--config", "-c", type=str, default="base_config")
   parser.add_argument('--model_dir', "-m", type=str, default="./best_model/model.pt")
 
   args, _ = parser.parse_known_args()

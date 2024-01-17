@@ -32,7 +32,7 @@ class CustomModel(nn.Module):
         self.loss_fnt = FocalLoss()
         self.fc_layer = nn.Sequential(
             nn.Linear(2 * hidden_size, hidden_size),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Dropout(p=0.1)
         )
         self.classifier = nn.Sequential(
