@@ -14,6 +14,8 @@ import os
 from config.config import call_config
 import torch.nn as nn
 import torch.nn.functional as F
+from custom_model import CustomModel
+from custom_tokenizer import Processor
 
 def set_seed(seed:int = 42):
   torch.manual_seed(seed)
@@ -69,31 +71,40 @@ if __name__ == '__main__':
 
   # load dataset
   train_dataset = load_data("../dataset/train/train.csv", train=True)
+  dev_dataset = load_data("../dataset/train/dev.csv")
 
   train_label = label_to_num(train_dataset['label'].values)
+  dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
   if MODEL_NAME.split('-')[0] == 'xlm':
     tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
   else:
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    if conf.custom_model:
+      tokenized_train = Processor(conf, tokenizer).read(train_dataset, train=True)
+      tokenized_dev = Processor(conf, tokenizer).read(dev_dataset)
+    else:
+      tokenized_train = tokenized_dataset(train_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
+  RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
   
   # Split train dataset into train, valid.
-  RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
+  # RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
   print(device)
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  model_config.num_labels = 30
-
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  if conf.custom_model:
+    model = CustomModel(MODEL_NAME, config=model_config)
+  else:
+    model_config.num_labels = 30
+    model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
     
-  print(model.config)
+  # print(model.config)
   model.parameters
   model.to(device)
   
@@ -121,7 +132,7 @@ if __name__ == '__main__':
     report_to="wandb",
     fp16=True
   )
-  trainer = CustomTrainer(
+  trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,

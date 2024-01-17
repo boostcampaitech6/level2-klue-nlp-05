@@ -1,10 +1,20 @@
 import pandas as pd
 import ast
 from config.config import call_config
+from masking import Mask, subject_entity_Mask, object_entity_Mask
 
 conf = call_config()
 
 def preprocessing(df, train=False):
+    if train & conf.masking:
+        df_masking = Mask(df)
+        df_subject_entity_masking = subject_entity_Mask(df)
+        df_object_entity_masking = object_entity_Mask(df)
+        df = pd.concat([df,df_masking])
+        df = pd.concat([df,df_subject_entity_masking])
+        df = pd.concat([df,df_object_entity_masking])
+        df = df.reset_index(drop=True)
+        
     # seperate subject_entity
     subject_word, subject_start_idx, subject_end_idx, subject_type = [], [], [], []
     for data in df['subject_entity']:
@@ -51,23 +61,11 @@ def preprocessing(df, train=False):
 
             type_counts = label_df['object_type'].value_counts()
 
-            # type이 전체 개수의 30개 이하인 것 찾기
+            # type이 전체 개수의 10% 이하인 것 찾기
             types_to_remove = type_counts[type_counts <= 30].index
             
             # 조건에 맞는 object_type 제거, 단 '@object_entity@'에 'POH'가 포함된 'POH' object_type은 제외
             df = df[~((df['label'] == label) & (df['object_type'].isin(types_to_remove)) & ~((df['object_type'] == 'POH')))]
-
-            
-    if conf.type_pair_preprocessing2 & train:      
-        for label in df['label'].unique():
-            type_counts = df[df['label'] == label]['object_type'].value_counts()
-            
-            # 가장 많은 type으로 변경
-            if not type_counts.empty:
-                most_frequent_type = type_counts.idxmax()
-
-                df.loc[df['label'] == label, 'object_type'] = most_frequent_type
-
 
     return df
 

@@ -5,6 +5,7 @@ import ast
 from config.config import call_config
 from entity_token_adder import add_typed_entity_marker_punct
 from preprocessing import preprocessing
+from custom_tokenizer import Processor
 
 conf = call_config()
 
@@ -25,15 +26,8 @@ def tokenized_dataset(dataset, tokenizer):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   
   if conf.use_entity_marker:
-    concat_entity = []
-    for e01, e01_type, e02, e02_type in zip(dataset['subject_word'], dataset['subject_type'], dataset['object_word'], dataset['object_type']):
-      temp = ''
-      temp = e01 + '[SEP]' + e02
-      temp = f'@ * {e01_type} * {e01} @ [SEP] & ^ {e02_type} ^ {e02} &'
-      concat_entity.append(temp)
-    
     # use entity marker
-    dataset = add_typed_entity_marker_punct(dataset)
+    concat_entity, dataset = add_typed_entity_marker_punct(dataset)
   else:
     concat_entity = []
     for e01, e02 in zip(dataset['subject_word'], dataset['object_word']):
@@ -95,7 +89,10 @@ def load_test_dataset(dataset_dir, tokenizer):
   test_dataset = load_data(dataset_dir)
   test_label = list(map(int,test_dataset['label'].values))
   # tokenizing dataset
-  tokenized_test = tokenized_dataset(test_dataset, tokenizer)
+  if conf.custom_model:
+    tokenized_test = Processor(conf, tokenizer).read(test_dataset)
+  else:
+    tokenized_test = tokenized_dataset(test_dataset, tokenizer)
   return test_dataset['id'], tokenized_test, test_label
 
 def label_to_num(label):

@@ -69,6 +69,9 @@ def add_typed_entity_marker_punct(dataset):
     Returns:
         list: 스페셜 토큰에 추가할 엔티티 타입의 list
     """
+    
+    entity_list = {'ORG':'조직', 'PER':'사람', 'POH':'명사', 'DAT':'날짜', 'LOC':'위치', 'NOH':'숫자'}
+    
     entity_tokens = set()
     df = dataset.copy()
 
@@ -83,8 +86,8 @@ def add_typed_entity_marker_punct(dataset):
 
         new_sentence = ''
 
-        curr_entity_tokens = [subject_type,
-                              objecet_type]
+        curr_entity_tokens = [entity_list[subject_type],
+                              entity_list[objecet_type]]
         entity_tokens.update(curr_entity_tokens)
 
         if subject_start_idx < object_start_idx:
@@ -103,8 +106,14 @@ def add_typed_entity_marker_punct(dataset):
     
     df['sentence'] = result
     # df.to_csv('typed_entity_marker_punct_train.csv')
+    
+    concat_entity = []
+    for e01, e01_type, e02, e02_type in zip(dataset['subject_word'],dataset['subject_type'], dataset['object_word'], dataset['object_type']):
+      temp = ''
+      temp = f'@ * {entity_list[e01_type]} * {e01} @ [SEP] & ^ {entity_list[e02_type]} ^ {e02} &'
+      concat_entity.append(temp)
 
-    return df
+    return concat_entity, df
 
 # add_typed_entity_marker_original("../dataset/train/train.csv")
 # add_typed_entity_marker_punct("../dataset/train/train.csv") 
