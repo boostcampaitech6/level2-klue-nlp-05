@@ -186,34 +186,8 @@ def data_cleaning(df):
 #     return train, dev
 
 def data_augmentation(df):
-    relation_df, no_relation_df = df[df['label']!='no_relation'], df[df['label']=='no_relation'],
-    relation_df['id'] = range(len(df), len(df)+len(relation_df))
-    no_relation_df['id'] = range(len(df)+len(relation_df), len(df)+len(relation_df)+len(no_relation_df))
-    
-    
-    for idx, row in relation_df.iterrows():
-        sentence = row['sentence']
-        object_word = row['object_word']
-        subject_start_idx, subject_end_idx = row['subject_start_idx'], row['subject_end_idx']
-        object_start_idx, object_end_idx = row['object_start_idx'], row['object_end_idx']
-        
-        if object_start_idx < subject_start_idx:
-            
-            if len(object_word) < len('<NAN>'):
-                subject_start_idx += len('<NAN>') - len(object_word)
-                subject_end_idx += len('<NAN>') - len(object_word)
-                relation_df['subject_start_idx'][idx] = subject_start_idx
-                relation_df['subject_end_idx'][idx] = subject_end_idx
-            else:
-                subject_start_idx -= len(object_word) - len('<NAN>')
-                subject_end_idx -= len(object_word) - len('<NAN>')
-                relation_df['subject_start_idx'][idx] = subject_start_idx
-                relation_df['subject_end_idx'][idx] = subject_end_idx
-                
-        relation_df['object_end_idx'][idx] = object_start_idx + len('<NAN>')
-        relation_df['sentence'][idx] = sentence.replace(object_word, '<NAN>')
-        relation_df['object_word'][idx] = '<NAN>'
-    relation_df['object_type'] = 'NAN'
+    no_relation_df = df[df['label']=='no_relation']
+    no_relation_df['id'] = range(len(df), len(df)+len(no_relation_df))
     
     for idx, row in no_relation_df.iterrows():
         sentence = row['sentence']
@@ -222,35 +196,33 @@ def data_augmentation(df):
         object_start_idx, object_end_idx = row['object_start_idx'], row['object_end_idx']
         
         if subject_start_idx < object_start_idx:
-            if len(subject_word) < len('<NAN>'):
-                object_start_idx += len('<NAN>') - len(subject_word)
+            if len(subject_word) < len('NaN'):
+                object_start_idx += len('NaN') - len(subject_word)
             else:
-                object_start_idx -= len(subject_word) - len('<NAN>')
-                
-            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('<NAN>')
+                object_start_idx -= len(subject_word) - len('NaN')
+            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('NaN')
             no_relation_df['object_start_idx'][idx] = object_start_idx
-            no_relation_df['object_end_idx'][idx] = object_start_idx + len('<NAN>')
-            no_relation_df['subject_word'][idx] = '<NAN>'
-            no_relation_df['object_word'][idx] = '<NAN>'
-            no_relation_df['sentence'][idx] = sentence.replace(subject_word, '<NAN>')
-            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(object_word, '<NAN>')
+            no_relation_df['object_end_idx'][idx] = object_start_idx + len('NaN')
+            no_relation_df['subject_word'][idx] = 'NaN'
+            no_relation_df['object_word'][idx] = 'NaN'
+            no_relation_df['sentence'][idx] = sentence.replace(subject_word, 'NaN')
+            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(object_word, 'NaN')
         else:
-            if len(object_word) < len('<NAN>'):
-                subject_start_idx += len('<NAN>') - len(object_word)
+            if len(object_word) < len('NaN'):
+                subject_start_idx += len('NaN') - len(object_word)
             else:
-                subject_start_idx -= len(object_word) - len('<NAN>')
-                
-            no_relation_df['object_end_idx'][idx] = object_start_idx + len('<NAN>')
+                subject_start_idx -= len(object_word) - len('NaN')
+            no_relation_df['object_end_idx'][idx] = object_start_idx + len('NaN')
             no_relation_df['subject_start_idx'][idx] = subject_start_idx
-            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('<NAN>')
-            no_relation_df['subject_word'][idx] = '<NAN>'
-            no_relation_df['object_word'][idx] = '<NAN>'
-            no_relation_df['sentence'][idx] = sentence.replace(object_word, '<NAN>')
-            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(subject_word, '<NAN>')
+            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('NaN')
+            no_relation_df['subject_word'][idx] = 'NaN'
+            no_relation_df['object_word'][idx] = 'NaN'
+            no_relation_df['sentence'][idx] = sentence.replace(object_word, 'NaN')
+            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(subject_word, 'NaN')
     no_relation_df['subject_type'] = 'NAN'
     no_relation_df['object_type'] = 'NAN'
     
-    df = pd.concat([df, relation_df, no_relation_df])
+    df = pd.concat([df, no_relation_df])
     df = df.sample(frac=1, random_state=42)
     
     return df
