@@ -61,7 +61,8 @@ if __name__ == '__main__':
         logging_dir='./logs',
         logging_steps=conf.train.logging_steps,
         resume_from_checkpoint=True,
-        fp16=conf.train.fp16
+        fp16=conf.train.fp16,
+        gradient_accumulation_steps=conf.train.gradient_accumulation_step
     )
 
     trainer = Trainer(
