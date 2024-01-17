@@ -53,15 +53,15 @@ class CustomModel(PreTrainedModel):
         return outputs
     
 class CustomModel2(PreTrainedModel):
-    def __init__(self, model_name, config):
+    def __init__(self, model_name, config, conf):
         super().__init__(config=config)
         self.encoder = AutoModel.from_pretrained(model_name, config=config)
         hidden_size = config.hidden_size
-        self.loss_fnt = FocalLoss()
+        self.loss_fnt = FocalLoss(alpha=conf.model.alpha, gamma=conf.model.gamma)
         self.classifier = nn.Sequential(
             nn.Linear(2 * hidden_size, hidden_size),
             nn.GELU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=conf.model.last_dense_layer_dropout_prob),
             nn.Linear(hidden_size, 30)
         )
 

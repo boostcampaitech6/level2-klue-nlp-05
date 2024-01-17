@@ -2,8 +2,7 @@ import pickle as pickle
 import pandas as pd
 import ast
 
-from config.config import call_config
-from entity_token_adder import add_typed_entity_marker_punct
+from config import call_config
 from preprocessing import preprocessing
 from custom_tokenizer import Processor
 

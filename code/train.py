@@ -11,11 +11,11 @@ import torch
 import wandb
 import os
 
-from config.config import call_config
+from config import call_config
 import torch.nn as nn
 import torch.nn.functional as F
 from custom_model import CustomModel, CustomModel2
-from custom_tokenizer import Processor
+from custom_tokenizer import Processor, Processor2
 
 def set_seed(seed:int = 42):
   torch.manual_seed(seed)
@@ -42,21 +42,17 @@ if __name__ == '__main__':
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = load_data("../dataset/train/train.csv", train=True)
-  dev_dataset = load_data("../dataset/train/dev.csv")
+  train_dataset = pd.read_csv(conf.path.train_path)
+  dev_dataset = pd.read_csv(conf.path.dev_path)
 
   train_label = label_to_num(train_dataset['label'].values)
   dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
-  if MODEL_NAME.split('-')[0] == 'xlm':
-    tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
-  else:
-    if conf.custom_model:
-      tokenized_train = Processor(conf, tokenizer).read(train_dataset, train=True)
-      tokenized_dev = Processor(conf, tokenizer).read(dev_dataset)
-    else:
-      tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+  tokenized_train = Processor2(conf, tokenizer).read(train_dataset)
+  tokenized_dev = Processor2(conf, tokenizer).read(dev_dataset)
+  print('custom_model:',conf.model.custom_model)
+
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -70,15 +66,8 @@ if __name__ == '__main__':
   print(device)
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  if conf.custom_model==1:
-    model = CustomModel(MODEL_NAME, config=model_config)
-  elif conf.custom_model==2:
-    model = CustomModel2(MODEL_NAME, config=model_config)
-  else:
-    model_config.num_labels = 30
-    model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
-    
-   
+  model = CustomModel2(MODEL_NAME, config=model_config , conf = conf)
+  model.encoder.resize_token_embeddings(len(tokenizer))
   model.parameters
   model.to(device)
 
@@ -89,10 +78,11 @@ if __name__ == '__main__':
   def optuna_hp_space(trial):
     return {
         "learning_rate": trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True),
-        "warmup_steps": trial.suggest_int("warmup_steps", 0, 1000),
-        "weight_decay": trial.suggest_float("weight_decay", 0.0, 0.3),
-        "lr_scheduler_type": trial.suggest_categorical("lr_scheduler_type", ["linear", "cosine", "cosine_with_restarts", "polynomial", "constant"]),
-        "seed": trial.suggest_int("seed", 40, 42)
+        "warmup_steps": trial.suggest_int("warmup_steps", 100, 1000),
+        "weight_decay": trial.suggest_float("weight_decay", 0.01, 0.3),
+        "gradient_accumulation_steps": trial.suggest_int("gradient_accumulation_steps",[2,4]),
+        "seed": trial.suggest_int("seed", 40, 42),
+        
     }
   
   # 사용한 option 외에도 다양한 option들이 있습니다.
@@ -118,22 +108,23 @@ if __name__ == '__main__':
     metric_for_best_model="micro f1 score",
     report_to="wandb",
     fp16=conf.train.fp16,
-    gradient_accumulation_steps=2
+    gradient_accumulation_steps=conf.train.gradient_accumulation_steps
   )
+
   trainer = Trainer(
-    model=model,
+    model_init = model_init,
     args=training_args,
     train_dataset=RE_train_dataset,
     eval_dataset=RE_dev_dataset,
     compute_metrics=compute_metrics
   )
-  # best_trials = trainer.hyperparameter_search(n_trials=20, direction="maximize",backend="optuna", hp_space=optuna_hp_space) 
-  # train model
-  trainer.train()
   
-  if conf.model.add_entity_token:
-    save_path = f"./model_save/{conf.model.model_name.replace('/', '_')}_Max-epoch:{conf.train.epochs}_Batch-size:{conf.train.batch_size}"
-    torch.save(model.state_dict(), save_path)
-  else:
-    model.save_pretrained('./best_model')
+  best_trial = trainer.hyperparameter_search(
+    direction="maximize",
+    backend="optuna",
+    hp_space=optuna_hp_space,
+    n_trials=20)
+  print(best_trial)
+  trainer.train()
+  model.save_pretrained('./best_model')
   wandb.finish()

@@ -1,13 +1,15 @@
 path:
   train_path: ../dataset/train/train_final.csv
-  dev_path: ../dataset/test/dev_final.csv
+  dev_path: ../dataset/train/dev_final.csv
   test_path: ../dataset/test/test_final.csv
 
 model:
   model_name: klue/roberta-large
   last_dense_layer_dropout_prob: 0.1
-  max_seq_length: 512
-  add_entity_token: True
+  max_seq_length: 256
+  alpha: 0.25
+  gamma: 2
+  custom_model: 2
 
 
 train:
@@ -20,6 +22,7 @@ train:
   logging_steps: 50
   eval_steps: 250
   fp16: True
+  gradient_accumulation_steps: 2
 
 utils:
   seed: 42
@@ -27,5 +30,5 @@ utils:
 
 wandb:
   project_name: shingeun
-  curr_ver: 1.2.14 gradient acc //klue/roberta-large)
+  curr_ver: shingeun_final
 
