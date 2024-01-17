@@ -25,10 +25,18 @@ def set_seed(seed:int = 42):
     np.random.seed(seed)
     random.seed(seed)
 
+def optuna_hp_space(trial):
+  return {
+    "learning_rate": trial.suggest_float("learning_rate", 1e-5, 5e-5, log=True),
+    "weight_decay": trial.suggest_float("weight_decay", 0.0, 0.4),
+    "warmup_steps": trial.suggest_int("warmup_steps", 0, 1000)
+  }
+
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("--config", "-c", type=str, default="base_config")
+  parser.add_argument("--train_type", "-type", type=str, default="train")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
@@ -67,6 +75,9 @@ if __name__ == '__main__':
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
+  def model_init():
+    return AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+
   if conf.model.use_tapt_model:
     model =  AutoModelForSequenceClassification.from_pretrained(conf.path.tapt_model_path, config=model_config)
   else:
@@ -75,49 +86,61 @@ if __name__ == '__main__':
   model.parameters
   model.to(device)
 
-  # set optimzier & lr scheduler
-  steps_per_epoch = len(RE_train_dataset) // (conf.train.batch_size * 8) if len(RE_train_dataset) % conf.train.batch_size == 0 else len(RE_train_dataset) // (conf.train.batch_size * 8) + 1
+  # set optimzier & lr scheduler --> 현재는 사용하지 않음
+  steps_per_epoch = len(RE_train_dataset) // conf.train.batch_size if len(RE_train_dataset) % conf.train.batch_size == 0 else len(RE_train_dataset) // conf.train.batch_size + 1
   optimizer = transformers.AdamW(model.parameters(), lr=conf.train.learning_rate)
   scheduler = OneCycleLR(optimizer, max_lr=conf.train.learning_rate, steps_per_epoch=steps_per_epoch,
                          pct_start=0.3, epochs=conf.train.epochs, anneal_strategy="cos",
                          div_factor=1e100, final_div_factor=1)
 
-  # 사용한 option 외에도 다양한 option들이 있습니다.
-  # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
   training_args = TrainingArguments(
-    output_dir='./results',          # output directory
-    save_total_limit=conf.utils.top_k,  # number of total save model.
-    save_steps=conf.train.save_steps,                 # model saving step.
-    num_train_epochs=conf.train.epochs,              # total number of training epochs
-    learning_rate=conf.train.learning_rate,               # learning_rate
-    per_device_train_batch_size=conf.train.batch_size,  # batch size per device during training
-    per_device_eval_batch_size=conf.train.batch_size,   # batch size for evaluation
-    weight_decay=conf.train.weight_decay,               # strength of weight decay
-    logging_dir='./logs',            # directory for storing logs
-    logging_steps=conf.train.logging_steps,              # log saving step.
-    evaluation_strategy='steps', # evaluation strategy to adopt during training
-                                # `no`: No evaluation during training.
-                                # `steps`: Evaluate every `eval_steps`.
-                                # `epoch`: Evaluate every end of epoch.
-    eval_steps=conf.train.eval_steps,            # evaluation step.
+    output_dir='./results',
+    save_total_limit=conf.utils.top_k,
+    save_steps=conf.train.save_steps,
+    num_train_epochs=conf.train.epochs,
+    learning_rate=conf.train.learning_rate,
+    per_device_train_batch_size=conf.train.batch_size,
+    per_device_eval_batch_size=conf.train.batch_size,
+    weight_decay=conf.train.weight_decay,
+    warmup_steps=conf.train.warmup_steps,
+    logging_dir='./logs',
+    logging_steps=conf.train.logging_steps,
+    evaluation_strategy='steps',
+    eval_steps=conf.train.eval_steps,
     load_best_model_at_end=True,
     metric_for_best_model="micro f1 score",
+    lr_scheduler_type="cosine",
     report_to="wandb",
     fp16=conf.train.fp16,
-    gradient_accumulation_steps=8
-  )
-  trainer = CustomTrainer(
-    model=model,
-    args=training_args,
-    train_dataset=RE_train_dataset,
-    eval_dataset=RE_dev_dataset,
-    data_collator=data_collator,
-    optimizers=(optimizer, scheduler),
-    compute_metrics=compute_metrics
+    gradient_accumulation_steps=2
   )
 
-  # train model
-  trainer.train()
-  model.save_pretrained('./best_model')
+  if args.train_type == "train":
+    trainer = CustomTrainer(
+      model=model,
+      args=training_args,
+      train_dataset=RE_train_dataset,
+      eval_dataset=RE_dev_dataset,
+      data_collator=data_collator,
+      compute_metrics=compute_metrics
+    )
+
+    # train model
+    trainer.train()
+    model.save_pretrained('./best_model')
+  elif args.train_type == "hp_search":
+    trainer = CustomTrainer(
+	    model=None,
+	    args=training_args,
+	    train_dataset=RE_train_dataset,
+	    eval_dataset=RE_dev_dataset,
+      data_collator=data_collator,
+	    compute_metrics=compute_metrics,
+	    model_init=model_init
+	  )
+    best_trials = trainer.hyperparameter_search(n_trials=20,
+                                               direction="maximize",
+                                               backend="optuna",
+                                               hp_space=optuna_hp_space)
   
   wandb.finish()
