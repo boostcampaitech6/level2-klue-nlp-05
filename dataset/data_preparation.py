@@ -35,73 +35,76 @@ def data_cleaning(df):
     # label별 entity 타입 수정
     # 1. org:top_members/employees
     df['subject_type'][df[(df['label']=='org:top_members/employees') & (df['subject_type']=='PER')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='ORG')].index] = 'PER'
-    df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='ORG')].index] = 'PER'
-    df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='NOH')].index] = 'PER'
+    df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='ORG')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='LOC')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='NOH')].index] = 'POH'
     # 2. org:members
     df['subject_type'][df[(df['label']=='org:members') & (df['subject_type']=='PER')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='PER')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='NOH')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='DAT')].index] = 'ORG'
+    df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='PER')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='NOH')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='DAT')].index] = 'POH'
     # 3. org:product
     df['object_type'][df[df['label']=='org:product'].index] = 'POH'
     # 4. per:title
     df['object_type'][df[df['label']=='per:title'].index] = 'POH'
     # 5. org:alternate_names
     df['object_type'][df[(df['label']=='org:alternate_names') & (df['object_type']=='PER')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='org:alternate_names') & (df['object_type']=='DAT')].index] = 'ORG'
+    df['object_type'][df[(df['label']=='org:alternate_names') & (df['object_type']=='DAT')].index] = 'POH'
     # 6. per:employee_of
-    df['object_type'][df[(df['label']=='per:employee_of') & (df['object_type']=='DAT')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='per:employee_of') & (df['object_type']=='NOH')].index] = 'ORG'
+    df['object_type'][df[(df['label']=='per:employee_of') & (df['object_type']=='DAT')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:employee_of') & (df['object_type']=='NOH')].index] = 'POH'
     # 7. org:place_of_headquarters
     df['subject_type'][df[(df['label']=='org:place_of_headquarters') & (df['subject_type']=='PER')].index] = 'ORG'
-    df['object_type'][df[df['label']=='org:place_of_headquarters'].index] = 'LOC'
+    df['object_type'][df[(df['label']=='org:place_of_headquarters') & (df['object_type']=='DAT')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:place_of_headquarters') & (df['object_type']=='NOH')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:place_of_headquarters') & (df['object_type']=='PER')].index] = 'POH'
     # 8. per:product
     df['object_type'][df[df['label']=='per:product'].index] = 'POH'
     # 9. org:number_of_employees/members
     # 10. per:children
-    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='LOC')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='NOH')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='DAT')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='ORG')].index] = 'PER'
+    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='LOC')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='NOH')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='DAT')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='ORG')].index] = 'POH'
     # 11. per:place_of_residence
-    df['object_type'][df[df['label']=='per:place_of_residence'].index] = 'LOC'
+    df['object_type'][df[(df['label']=='per:place_of_residence') & (df['object_type']=='ORG')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:place_of_residence') & (df['object_type']=='DAT')].index] = 'POH'
     # 12. per:alternate_names
-    df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='ORG')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='LOC')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='ORG')].index] = 'PER'
+    df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='ORG')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='LOC')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='ORG')].index] = 'POH'
     # 13. per:other_family
-    df['object_type'][df[(df['label']=='per:other_family') & (df['object_type']=='LOC')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:other_family') & (df['object_type']=='ORG')].index] = 'PER'
+    df['object_type'][df[(df['label']=='per:other_family') & (df['object_type']=='LOC')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:other_family') & (df['object_type']=='ORG')].index] = 'POH'
     # 14. per:colleagues
-    df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='ORG')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='DAT')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='LOC')].index] = 'PER'
+    df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='ORG')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='DAT')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='LOC')].index] = 'POH'
     # 15. per:origin
     df['object_type'][df[(df['label']=='per:origin') & (df['object_type']=='DAT')].index] = 'POH'
     df['object_type'][df[(df['label']=='per:origin') & (df['object_type']=='PER')].index] = 'POH'
     df['object_type'][df[(df['label']=='per:origin') & (df['object_type']=='NOH')].index] = 'POH'
     # 16. per:siblings
     # 17. per:spouse
-    df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='LOC')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='ORG')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='DAT')].index] = 'PER'
+    df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='LOC')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='ORG')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='DAT')].index] = 'POH'
     # 18. org:founded
     # 19. org:political/religious_affiliation
-    df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='LOC')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='PER')].index] = 'ORG'
-    df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='DAT')].index] = 'ORG'
+    df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='LOC')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='PER')].index] = 'POH'
+    df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='DAT')].index] = 'POH'
     # 20. org:member_of
-    df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='NOH')].index] = 'ORG'
-    df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='DAT')].index] = 'ORG'
-    df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='PER')].index] = 'ORG'
+    df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='NOH')].index] = 'POH'
+    df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='DAT')].index] = 'POH'
+    df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='PER')].index] = 'POH'
     # 21. per:parents
-    df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='LOC')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='DAT')].index] = 'PER'
-    df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='NOH')].index] = 'PER'
+    df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='LOC')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='DAT')].index] = 'POH'
+    df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='NOH')].index] = 'POH'
     # 22. org:dissolved
     # 23. per:schools_attended
-    df['object_type'][df[df['label']=='per:schools_attended'].index] = 'ORG'
+    df['object_type'][df[(df['label']=='per:schools_attended') & (df['object_type']=='LOC')].index] = 'ORG'
     # 24. per:date_of_death
     df['object_type'][df[df['label']=='per:date_of_death'].index] = 'DAT'
     # 25. per:date_of_birth
@@ -112,7 +115,7 @@ def data_cleaning(df):
     df['object_type'][df[df['label']=='per:place_of_death'].index] = 'LOC'
     # 28. org:founded_by
     # 29. per:religion
-    df['object_type'][df[(df['label']=='per:religion') & (df['object_type']=='LOC')].index] = 'ORG'
+    df['object_type'][df[(df['label']=='per:religion') & (df['object_type']=='LOC')].index] = 'POH'
 
     return df
 
@@ -185,85 +188,51 @@ def data_cleaning(df):
 
 #     return train, dev
 
-def data_augmentation(df):
-    no_relation_df, relation_df = df[df['label']=='no_relation'], df[df['label']!='no_relation']
-    no_relation_df['id'], relation_df['id'] = range(len(df), len(df)+len(no_relation_df)), range(len(df)+len(no_relation_df),len(df)+len(no_relation_df)+len(relation_df))
+# def data_augmentation(df):
+#     no_relation_df = df[df['label']=='no_relation'], df[df['label']!='no_relation']
+#     no_relation_df['id'] = range(len(df), len(df)+len(no_relation_df))
     
-    for idx, row in no_relation_df.iterrows():
-        sentence = row['sentence']
-        subject_word, object_word = row['subject_word'], row['object_word']
-        subject_start_idx, object_start_idx = row['subject_start_idx'], row['object_start_idx']
+#     for idx, row in no_relation_df.iterrows():
+#         sentence = row['sentence']
+#         subject_word, object_word = row['subject_word'], row['object_word']
+#         subject_start_idx, object_start_idx = row['subject_start_idx'], row['object_start_idx']
         
-        if subject_start_idx < object_start_idx:
-            if len(subject_word) < len('MASK'):
-                object_start_idx += len('MASK') - len(subject_word)
-            else:
-                object_start_idx -= len(subject_word) - len('MASK')
-            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
-            no_relation_df['object_start_idx'][idx] = object_start_idx
-            no_relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
-            no_relation_df['subject_word'][idx] = 'MASK'
-            no_relation_df['object_word'][idx] = 'MASK'
-            no_relation_df['sentence'][idx] = sentence.replace(subject_word, 'MASK')
-            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(object_word, 'MASK')
-        else:
-            if len(object_word) < len('MASK'):
-                subject_start_idx += len('MASK') - len(object_word)
-            else:
-                subject_start_idx -= len(object_word) - len('MASK')
-            no_relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
-            no_relation_df['subject_start_idx'][idx] = subject_start_idx
-            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
-            no_relation_df['subject_word'][idx] = 'MASK'
-            no_relation_df['object_word'][idx] = 'MASK'
-            no_relation_df['sentence'][idx] = sentence.replace(object_word, 'MASK')
-            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(subject_word, 'MASK')
-    no_relation_df['subject_type'] = 'MASK'
-    no_relation_df['object_type'] = 'MASK'
+#         if subject_start_idx < object_start_idx:
+#             if len(subject_word) < len('MASK'):
+#                 object_start_idx += len('MASK') - len(subject_word)
+#             else:
+#                 object_start_idx -= len(subject_word) - len('MASK')
+#             no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
+#             no_relation_df['object_start_idx'][idx] = object_start_idx
+#             no_relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
+#             no_relation_df['subject_word'][idx] = 'MASK'
+#             no_relation_df['object_word'][idx] = 'MASK'
+#             no_relation_df['sentence'][idx] = sentence.replace(subject_word, 'MASK')
+#             no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(object_word, 'MASK')
+#         else:
+#             if len(object_word) < len('MASK'):
+#                 subject_start_idx += len('MASK') - len(object_word)
+#             else:
+#                 subject_start_idx -= len(object_word) - len('MASK')
+#             no_relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
+#             no_relation_df['subject_start_idx'][idx] = subject_start_idx
+#             no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
+#             no_relation_df['subject_word'][idx] = 'MASK'
+#             no_relation_df['object_word'][idx] = 'MASK'
+#             no_relation_df['sentence'][idx] = sentence.replace(object_word, 'MASK')
+#             no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(subject_word, 'MASK')
+#     no_relation_df['subject_type'] = 'MASK'
+#     no_relation_df['object_type'] = 'MASK'
 
-    for idx, row in relation_df.iterrows():
-        sentence = row['sentence']
-        subject_word, object_word = row['subject_word'], row['object_word']
-        subject_start_idx, object_start_idx = row['subject_start_idx'], row['object_start_idx']
-        
-        if subject_start_idx < object_start_idx:
-            if len(subject_word) < len('MASK'):
-                object_start_idx += len('MASK') - len(subject_word)
-            else:
-                object_start_idx -= len(subject_word) - len('MASK')
-            relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
-            relation_df['object_start_idx'][idx] = object_start_idx
-            relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
-            relation_df['subject_word'][idx] = 'MASK'
-            relation_df['object_word'][idx] = 'MASK'
-            relation_df['sentence'][idx] = sentence.replace(subject_word, 'MASK')
-            relation_df['sentence'][idx] = relation_df['sentence'][idx].replace(object_word, 'MASK')
-        else:
-            if len(object_word) < len('MASK'):
-                subject_start_idx += len('MASK') - len(object_word)
-            else:
-                subject_start_idx -= len(object_word) - len('MASK')
-            relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
-            relation_df['subject_start_idx'][idx] = subject_start_idx
-            relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
-            relation_df['subject_word'][idx] = 'MASK'
-            relation_df['object_word'][idx] = 'MASK'
-            relation_df['sentence'][idx] = sentence.replace(object_word, 'MASK')
-            relation_df['sentence'][idx] = relation_df['sentence'][idx].replace(subject_word, 'MASK')
-    relation_df['subject_type'] = 'MASK'
-    relation_df['object_type'] = 'MASK'
+#     df = pd.concat([df, no_relation_df])
+#     df = df.sample(frac=1, random_state=42)
     
-    df = pd.concat([df, no_relation_df, relation_df])
-    df = df.sample(frac=1, random_state=42)
-    
-    return df
-
+#     return df
 
 # download dev set
 train, dev, test = pd.read_csv("./train/train.csv"), pd.read_csv("./train/dev.csv"), pd.read_csv("./test/test.csv")
 train, dev, test = preprocessing(train), preprocessing(dev), preprocessing(test)
 train = data_cleaning(train)
-train = data_augmentation(train)
 train.to_csv("./train/train_final.csv", index=False)
 dev.to_csv('./train/dev_final.csv', index=False)
 test.to_csv("./test/test_final.csv", index=False)
