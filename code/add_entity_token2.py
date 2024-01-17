@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from transformers import AutoModel
 from torch.cuda.amp import autocast
 import pandas as pd
 from tqdm import tqdm
 
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=1, gamma=2, reduction='mean'):
+    def __init__(self, alpha=0.25, gamma=2, reduction='mean'):
         super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
@@ -30,10 +31,10 @@ class Custom_Model(nn.Module):
         self.args = args
         self.encoder = AutoModel.from_pretrained(args.model.model_name, config=config)
         hidden_size = config.hidden_size
-        self.loss_fnt = FocalLoss()
+        self.loss_fnt = nn.CrossEntropyLoss()
         self.classifier = nn.Sequential(
             nn.Linear(2 * hidden_size, hidden_size),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Dropout(p=args.model.last_dense_layer_dropout_prob),
             nn.Linear(hidden_size, 30)
         )

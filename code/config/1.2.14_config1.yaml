@@ -11,14 +11,14 @@ model:
 
 
 train:
-  epochs: 7
+  epochs: 10
   batch_size: 32
   learning_rate: 5e-5
-  save_steps: 500
+  save_steps: 0
   warmup_steps: 500
   weight_decay: 0.01
-  logging_steps: 100
-  eval_steps: 500
+  logging_steps: 50
+  eval_steps: 250
   fp16: True
 
 utils:
@@ -27,5 +27,5 @@ utils:
 
 wandb:
   project_name: shingeun
-  curr_ver: 1.2.14 (add_entity_token & hidden_state_concat model(type input changed) & cls_emb_added//klue/roberta-large)
+  curr_ver: 1.2.14 gradient acc //klue/roberta-large)
 

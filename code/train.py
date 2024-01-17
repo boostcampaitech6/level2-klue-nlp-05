@@ -69,6 +69,19 @@ if __name__ == '__main__':
     model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
   model.parameters
   model.to(device)
+
+  
+  def model_init():
+    return model
+  
+  def optuna_hp_space(trial):
+    return {
+        "learning_rate": trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True),
+        "warmup_steps": trial.suggest_int("warmup_steps", 0, 1000),
+        "weight_decay": trial.suggest_float("weight_decay", 0.0, 0.3),
+        "lr_scheduler_type": trial.suggest_categorical("lr_scheduler_type", ["linear", "cosine", "cosine_with_restarts", "polynomial", "constant"]),
+        "seed": trial.suggest_int("seed", 40, 42)
+    }
   
   # 사용한 option 외에도 다양한 option들이 있습니다.
   # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
@@ -92,7 +105,8 @@ if __name__ == '__main__':
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
     report_to="wandb",
-    fp16=conf.train.fp16
+    fp16=conf.train.fp16,
+    gradient_accumulation_steps=2
   )
   trainer = Trainer(
     model=model,
@@ -100,10 +114,8 @@ if __name__ == '__main__':
     train_dataset=RE_train_dataset,
     eval_dataset=RE_dev_dataset,
     compute_metrics=compute_metrics,
-    gradient_accumulation_steps=4,
-
   )
-
+  # best_trials = trainer.hyperparameter_search(n_trials=20, direction="maximize",backend="optuna", hp_space=optuna_hp_space) 
   # train model
   trainer.train()
   
@@ -112,5 +124,4 @@ if __name__ == '__main__':
     torch.save(model.state_dict(), save_path)
   else:
     model.save_pretrained('./best_model')
-  
   wandb.finish()
