@@ -9,19 +9,20 @@ model:
   use_tapt_model: False
 
 train:
-  epochs: 20
-  batch_size: 64
-  learning_rate: 2e-5
-  save_steps: 500
+  epochs: 10
+  batch_size: 32
+  learning_rate: 3e-5
+  save_steps: 0
   warmup_steps: 500
   weight_decay: 0.01
-  logging_steps: 100
-  eval_steps: 500
+  logging_steps: 1000
+  eval_steps: 1000
   fp16: True
+  gradient_accumulation_step: 4
 
 utils:
   seed: 42
-  top_k : 5
+  top_k : 0
 
 wandb:
   project_name: level2_RE
