@@ -68,9 +68,7 @@ def tokenized_dataset_pretrain(dataset, tokenizer):
   for _, item in tqdm(dataset.iterrows(), desc="tokenizing", total=len(dataset)):
     subj = item["subject_entity"]
     obj = item["object_entity"]
-
-    concat_entity = tokenizer.sep_token.join([subj, obj])
-    # roberta 모델은 token_type_ids 레이어를 사용하지 않습니다.
+    concat_entity = subj + "와 " + obj + "의 관계"
     output = tokenizer(concat_entity, item["sentence"], padding=True, truncation=True, max_length=256, add_special_tokens=True)
     data.append(output)
   return data
