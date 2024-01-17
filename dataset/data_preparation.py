@@ -186,43 +186,74 @@ def data_cleaning(df):
 #     return train, dev
 
 def data_augmentation(df):
-    no_relation_df = df[df['label']=='no_relation']
-    no_relation_df['id'] = range(len(df), len(df)+len(no_relation_df))
+    no_relation_df, relation_df = df[df['label']=='no_relation'], df[df['label']!='no_relation']
+    no_relation_df['id'], relation_df = range(len(df), len(df)+len(no_relation_df)), range(len(df)+len(no_relation_df),len(df)+len(no_relation_df)+len(relation_df))
     
     for idx, row in no_relation_df.iterrows():
         sentence = row['sentence']
         subject_word, object_word = row['subject_word'], row['object_word']
-        subject_start_idx, subject_end_idx = row['subject_start_idx'], row['subject_end_idx']
-        object_start_idx, object_end_idx = row['object_start_idx'], row['object_end_idx']
+        subject_start_idx, object_start_idx = row['subject_start_idx'], row['object_start_idx']
         
         if subject_start_idx < object_start_idx:
-            if len(subject_word) < len('NaN'):
-                object_start_idx += len('NaN') - len(subject_word)
+            if len(subject_word) < len('MASK'):
+                object_start_idx += len('MASK') - len(subject_word)
             else:
-                object_start_idx -= len(subject_word) - len('NaN')
-            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('NaN')
+                object_start_idx -= len(subject_word) - len('MASK')
+            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
             no_relation_df['object_start_idx'][idx] = object_start_idx
-            no_relation_df['object_end_idx'][idx] = object_start_idx + len('NaN')
-            no_relation_df['subject_word'][idx] = 'NaN'
-            no_relation_df['object_word'][idx] = 'NaN'
-            no_relation_df['sentence'][idx] = sentence.replace(subject_word, 'NaN')
-            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(object_word, 'NaN')
+            no_relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
+            no_relation_df['subject_word'][idx] = 'MASK'
+            no_relation_df['object_word'][idx] = 'MASK'
+            no_relation_df['sentence'][idx] = sentence.replace(subject_word, 'MASK')
+            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(object_word, 'MASK')
         else:
-            if len(object_word) < len('NaN'):
-                subject_start_idx += len('NaN') - len(object_word)
+            if len(object_word) < len('MASK'):
+                subject_start_idx += len('MASK') - len(object_word)
             else:
-                subject_start_idx -= len(object_word) - len('NaN')
-            no_relation_df['object_end_idx'][idx] = object_start_idx + len('NaN')
+                subject_start_idx -= len(object_word) - len('MASK')
+            no_relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
             no_relation_df['subject_start_idx'][idx] = subject_start_idx
-            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('NaN')
-            no_relation_df['subject_word'][idx] = 'NaN'
-            no_relation_df['object_word'][idx] = 'NaN'
-            no_relation_df['sentence'][idx] = sentence.replace(object_word, 'NaN')
-            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(subject_word, 'NaN')
-    no_relation_df['subject_type'] = 'NAN'
-    no_relation_df['object_type'] = 'NAN'
+            no_relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
+            no_relation_df['subject_word'][idx] = 'MASK'
+            no_relation_df['object_word'][idx] = 'MASK'
+            no_relation_df['sentence'][idx] = sentence.replace(object_word, 'MASK')
+            no_relation_df['sentence'][idx] = no_relation_df['sentence'][idx].replace(subject_word, 'MASK')
+    no_relation_df['subject_type'] = 'MASK'
+    no_relation_df['object_type'] = 'MASK'
+
+    for idx, row in relation_df.iterrows():
+        sentence = row['sentence']
+        subject_word, object_word = row['subject_word'], row['object_word']
+        subject_start_idx, object_start_idx = row['subject_start_idx'], row['object_start_idx']
+        
+        if subject_start_idx < object_start_idx:
+            if len(subject_word) < len('MASK'):
+                object_start_idx += len('MASK') - len(subject_word)
+            else:
+                object_start_idx -= len(subject_word) - len('MASK')
+            relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
+            relation_df['object_start_idx'][idx] = object_start_idx
+            relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
+            relation_df['subject_word'][idx] = 'MASK'
+            relation_df['object_word'][idx] = 'MASK'
+            relation_df['sentence'][idx] = sentence.replace(subject_word, 'MASK')
+            relation_df['sentence'][idx] = relation_df['sentence'][idx].replace(object_word, 'MASK')
+        else:
+            if len(object_word) < len('MASK'):
+                subject_start_idx += len('MASK') - len(object_word)
+            else:
+                subject_start_idx -= len(object_word) - len('MASK')
+            relation_df['object_end_idx'][idx] = object_start_idx + len('MASK')
+            relation_df['subject_start_idx'][idx] = subject_start_idx
+            relation_df['subject_end_idx'][idx] = subject_start_idx + len('MASK')
+            relation_df['subject_word'][idx] = 'MASK'
+            relation_df['object_word'][idx] = 'MASK'
+            relation_df['sentence'][idx] = sentence.replace(object_word, 'MASK')
+            relation_df['sentence'][idx] = relation_df['sentence'][idx].replace(subject_word, 'MASK')
+    relation_df['subject_type'] = 'MASK'
+    relation_df['object_type'] = 'MASK'
     
-    df = pd.concat([df, no_relation_df])
+    df = pd.concat([df, no_relation_df, relation_df])
     df = df.sample(frac=1, random_state=42)
     
     return df
