@@ -187,7 +187,7 @@ def data_cleaning(df):
 
 def data_augmentation(df):
     no_relation_df, relation_df = df[df['label']=='no_relation'], df[df['label']!='no_relation']
-    no_relation_df['id'], relation_df = range(len(df), len(df)+len(no_relation_df)), range(len(df)+len(no_relation_df),len(df)+len(no_relation_df)+len(relation_df))
+    no_relation_df['id'], relation_df['id'] = range(len(df), len(df)+len(no_relation_df)), range(len(df)+len(no_relation_df),len(df)+len(no_relation_df)+len(relation_df))
     
     for idx, row in no_relation_df.iterrows():
         sentence = row['sentence']
