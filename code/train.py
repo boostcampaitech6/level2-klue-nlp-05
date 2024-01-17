@@ -61,7 +61,7 @@ if __name__ == '__main__':
   set_seed(42)
 
   wandb.login()
-  wandb.init(project=conf.wandb.project_name, name=conf.wandb.version_name)
+  wandb.init(project=conf.wandb.project_name)
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
@@ -69,23 +69,27 @@ if __name__ == '__main__':
 
   # load dataset
   train_dataset = load_data("../dataset/train/train.csv", train=True)
+  dev_dataset = load_data("../dataset/dev.csv")
 
   if MODEL_NAME=="beomi/llama-2-ko-7b":
     question_template = "### Human: 다음 두 문장의 관계를 entailment, neutral, contradiction 중 하나로 분류해줘. "
     train_instructions = [f'{question_template}\npremise: {x}\nhypothesis: {y}\n\n### Assistant: {label_to_num[z]}' for x,y,z in zip(train_dataset['premise'],train_dataset['hypothesis'],train_dataset['label'])]
   train_label = label_to_num(train_dataset['label'].values)
+  dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
   if MODEL_NAME[:10] == "xlm-roberta":
     tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
   else:
     tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  
+  RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
+
   # Split train dataset into train, valid.
-  RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
+  # RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
@@ -135,7 +139,6 @@ if __name__ == '__main__':
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
     report_to="wandb",
-    fp16=True,
     adam_beta1=conf.train.adam_beta1,
     adam_beta2=conf.train.adam_beta2,
     adam_epsilon=conf.train.adam_epsilon,

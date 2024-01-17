@@ -28,3 +28,11 @@ utils:
 
 wandb:
   project_name: level2_RE
+
+use_entity_marker: True
+
+dup_preprocessing: True
+
+type_pair_preprocessing: True
+
+type_pair_preprocessing2: False
