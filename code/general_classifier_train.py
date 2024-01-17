@@ -73,9 +73,13 @@ if __name__ == '__main__':
   special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
   tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
-  # load dataset
-  train_dataset = load_data('../dataset/train/general_train_true_labels.csv')
-  dev_dataset = load_data('../dataset/train/general_dev_true_labels.csv')
+  # load dataset(for True labels)
+  # train_dataset = load_data('../dataset/train/general_train_true_labels.csv')
+  # dev_dataset = load_data('../dataset/train/general_dev_true_labels.csv')
+
+  # load dataset(for ALL labels)
+  train_dataset = load_data('../dataset/train/train_final.csv')
+  dev_dataset = load_data('../dataset/train/dev_final.csv')
 
   train_label = label_to_num(train_dataset['label'].values)
   dev_label = label_to_num(dev_dataset['label'].values)
