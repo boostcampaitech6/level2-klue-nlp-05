@@ -1,4 +1,5 @@
 *.pyc
 code/results/*
 code/wandb/*
-code/__pycache__/*
+code/best_model/pytorch_model.bin
+*.pt

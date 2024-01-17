@@ -13,8 +13,6 @@ import torch
 import numpy as np
 import argparse
 
-from omegaconf import OmegaConf
-
 
 def inference(model, tokenized_sent, device):
   """
@@ -41,7 +39,7 @@ def inference(model, tokenized_sent, device):
 
     output_pred.append(result)
     output_prob.append(prob)
-  
+
   return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
 
 
