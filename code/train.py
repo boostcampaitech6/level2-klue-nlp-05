@@ -53,45 +53,41 @@ if __name__ == '__main__':
 
   # load dataset
   train_dataset = load_data(conf.path.train_path)
+  dev_dataset = load_data(conf.path.dev_path)
 
   train_label = label_to_num(train_dataset['label'].values)
+  dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
   if MODEL_NAME.split('-')[0] == 'xlm':
     tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
+    tokenized_dev = tokenized_dataset_xlm(dev_dataset, tokenizer)
   else:
     tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  
-  # Split train dataset into train, valid.
-  RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
+  RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
   print(device)
   # setting model hyperparameter
-  model_config =  AutoConfig.from_pretrained(MODEL_NAME)
+  model_config = AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
+
+  if conf.model.use_tapt_model:
+    MODEL_NAME = conf.path.tapt_model_path
 
   def model_init():
     return AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
 
-  if conf.model.use_tapt_model:
-    model =  AutoModelForSequenceClassification.from_pretrained(conf.path.tapt_model_path, config=model_config)
-  else:
-    model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
   print(model.config)
   model.parameters
   model.to(device)
 
-  # set optimzier & lr scheduler --> 현재는 사용하지 않음
-  steps_per_epoch = len(RE_train_dataset) // conf.train.batch_size if len(RE_train_dataset) % conf.train.batch_size == 0 else len(RE_train_dataset) // conf.train.batch_size + 1
-  optimizer = transformers.AdamW(model.parameters(), lr=conf.train.learning_rate)
-  scheduler = OneCycleLR(optimizer, max_lr=conf.train.learning_rate, steps_per_epoch=steps_per_epoch,
-                         pct_start=0.3, epochs=conf.train.epochs, anneal_strategy="cos",
-                         div_factor=1e100, final_div_factor=1)
 
   training_args = TrainingArguments(
     output_dir='./results',
@@ -112,7 +108,7 @@ if __name__ == '__main__':
     lr_scheduler_type="cosine",
     report_to="wandb",
     fp16=conf.train.fp16,
-    gradient_accumulation_steps=2
+    gradient_accumulation_steps=conf.train.gradient_accumulation_step
   )
 
   if args.train_type == "train":
@@ -124,8 +120,6 @@ if __name__ == '__main__':
       data_collator=data_collator,
       compute_metrics=compute_metrics
     )
-
-    # train model
     trainer.train()
     model.save_pretrained('./best_model')
   elif args.train_type == "hp_search":
@@ -138,9 +132,10 @@ if __name__ == '__main__':
 	    compute_metrics=compute_metrics,
 	    model_init=model_init
 	  )
-    best_trials = trainer.hyperparameter_search(n_trials=20,
+    best_trials = trainer.hyperparameter_search(n_trials=10,
                                                direction="maximize",
                                                backend="optuna",
                                                hp_space=optuna_hp_space)
-  
+    print(best_trials)
+
   wandb.finish()
