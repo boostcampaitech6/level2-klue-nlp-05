@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoConfig
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification
 from torch.utils.data import DataLoader
 from omegaconf import OmegaConf
 from load_data import RE_Dataset, load_test_dataset, num_to_label
@@ -12,6 +12,8 @@ import torch
 
 import numpy as np
 import argparse
+
+from omegaconf import OmegaConf
 
 
 def inference(model, tokenized_sent, device):
@@ -49,7 +51,7 @@ if __name__ == '__main__':
   parser.add_argument('--model_dir', "-m", type=str, default="./best_model/model.pt")
 
   args, _ = parser.parse_known_args()
-  conf = OmegaConf.load(f"./config/{args.config}.yaml")
+  conf = call_config()
   print(args)
   
   set_seed(42)
@@ -60,22 +62,28 @@ if __name__ == '__main__':
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
-  # 스페셜 토큰 추가
-  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
-  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
+  if conf.utils.TOKEN_TYPE == 1:
+    # 스페셜 토큰 추가
+    special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+    tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
+  ## TODO 본인토큰타입 맞춰서 추가
 
   ## load my model
   MODEL_NAME = conf.model.model_name
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  model = CustomModel(conf, config=model_config)
-  model.encoder.resize_token_embeddings(len(tokenizer))
-  model.load_state_dict(torch.load(args.model_dir))
+  if conf.utils.isCustom:
+    model = CustomModel(conf, config=model_config)
+    model.encoder.resize_token_embeddings(len(tokenizer))
+    model.load_state_dict(torch.load(args.model_dir))
+  else:
+    model = AutoModelForSequenceClassification.from_pretrained(args.model_dir, config=model_config)
+  
   model.parameters
   model.to(device)
 
   ## load test datset
   test_dataset_dir = conf.path.test_path
-  test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer)
+  test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer, MODEL_NAME)
   Re_test_dataset = RE_Dataset(test_dataset ,test_label)
 
   ## predict answer

@@ -1,0 +1,38 @@
+path:
+  train_path: ../dataset/train/train.csv
+  dev_path: ../dataset/train/dev.csv
+  test_path: ../dataset/test/test_data.csv
+
+model:
+  model_name: xlm-roberta-large
+
+train:
+  epochs: 10
+  batch_size: 16
+  learning_rate: 0.00000992925489849659
+  save_steps: 2000
+  warmup_steps: 115
+  weight_decay: 0.12673903014035376
+  logging_steps: 100
+  eval_steps: 2000
+  adam_beta1: 0.8303720723968628
+  adam_beta2: 0.9831950743948984
+  adam_epsilon: 0.00000022212066891763
+  lr_scheduler_type: linear
+  fp16: True
+  bf16: False
+
+utils:
+  seed: 42
+  top_k : 1
+
+wandb:
+  project_name: level2_RE
+
+use_entity_marker: True
+
+dup_preprocessing: True
+
+type_pair_preprocessing: True
+
+type_pair_preprocessing2: False

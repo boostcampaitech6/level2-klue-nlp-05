@@ -3,6 +3,11 @@ import pandas as pd
 import torch
 import ast
 
+from config.config import call_config
+from entity_token_adder import add_typed_entity_marker_punct
+from preprocessing import preprocessing
+
+conf = call_config()
 
 def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
@@ -102,6 +107,19 @@ def load_test_dataset(dataset_dir, tokenizer):
     tokenized_test = tokenized_dataset(test_dataset, tokenizer)
 
     return test_dataset['id'], tokenized_test, test_label
+def load_test_dataset(dataset_dir, tokenizer, MODEL_NAME=None):
+  """
+    test dataset을 불러온 후,
+    tokenizing 합니다.
+  """
+  test_dataset = load_data(dataset_dir)
+  test_label = list(map(int,test_dataset['label'].values))
+  # tokenizing dataset
+  if MODEL_NAME and MODEL_NAME[:10] == "xlm-roberta":
+    tokenized_test = tokenized_dataset_xlm(test_dataset, tokenizer)
+  else:
+    tokenized_test = tokenized_dataset(test_dataset, tokenizer)
+  return test_dataset['id'], tokenized_test, test_label
 
 def label_to_num(label):
   num_label = []
