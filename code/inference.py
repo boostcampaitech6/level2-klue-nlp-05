@@ -48,7 +48,7 @@ if __name__ == '__main__':
   parser.add_argument('--model_dir', "-m", type=str, default="./best_model")
 
   args, _ = parser.parse_known_args()
-  conf = OmegaConf.load(f"./config/{args.config}.yaml")
+  conf = call_config()
   print(args)
   
   set_seed(42)
@@ -63,6 +63,7 @@ if __name__ == '__main__':
   ## load my model
   MODEL_NAME = args.model_dir # model dir.
   model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
+  
   model.parameters
   model.to(device)
 

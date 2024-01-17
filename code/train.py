@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, AutoModelForCausalLM
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
+from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm, tokenized_dataset_xlm
 from custom_datasets import RE_Dataset
 from metrics import compute_metrics
 
@@ -11,35 +11,64 @@ import torch
 import wandb
 import os
 
+from config.config import call_config
+import torch.nn as nn
+import torch.nn.functional as F
 
 def set_seed(seed:int = 42):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(seed)
-    random.seed(seed)
+  torch.manual_seed(seed)
+  torch.cuda.manual_seed(seed)
+  torch.cuda.manual_seed_all(seed)  # if use multi-GPU
+  torch.backends.cudnn.deterministic = True
+  torch.backends.cudnn.benchmark = False
+  np.random.seed(seed)
+  random.seed(seed)
+    
+class SmoothFocalCrossEntropyLoss(nn.Module):
+  def __init__(self, smoothing=0.1, gamma=2.0):
+    super(SmoothFocalCrossEntropyLoss, self).__init__()
+    self.smoothing = smoothing
+    self.gamma = gamma
+
+  def forward(self, input, target):
+    log_prob = F.log_softmax(input, dim=-1)
+    prob = torch.exp(log_prob)
+    weight = input.new_ones(input.size()) * self.smoothing / (input.size(-1) - 1.)
+    weight.scatter_(-1, target.unsqueeze(-1), (1. - self.smoothing))
+    
+    # focal loss weight
+    focal_weight = (1 - prob).pow(self.gamma)
+    weight *= focal_weight
+
+    loss = (-weight * log_prob).sum(dim=-1).mean()
+    return loss
+
+class CustomTrainer(Trainer):
+  def compute_loss(self, model, inputs, return_outputs=False):
+    labels = inputs.get("labels")
+    outputs = model(**inputs)
+    logits = outputs.get("logits")
+
+    loss_func = SmoothFocalCrossEntropyLoss(smoothing=0.1, gamma=2.0)
+    loss = loss_func(logits, labels)
+
+    return (loss, outputs) if return_outputs else loss
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="base_config")
-
-  args, _ = parser.parse_known_args()
-  conf = OmegaConf.load(f"./config/{args.config}.yaml")
+  conf = call_config()
 
   set_seed(42)
 
   wandb.login()
-  wandb.init(project=conf.wandb.project_name)
+  wandb.init(project=conf.wandb.project_name, name=conf.wandb.version_name)
 
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = load_data("../dataset/train/train.csv")
+  train_dataset = load_data("../dataset/train/train.csv", train=True)
 
   if MODEL_NAME=="beomi/llama-2-ko-7b":
     question_template = "### Human: 다음 두 문장의 관계를 entailment, neutral, contradiction 중 하나로 분류해줘. "
@@ -80,6 +109,7 @@ if __name__ == '__main__':
                                         )    
   else:
     model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config, cache_dir='/data/ephemeral/home/tmp')
+    
   print(model.config)
   model.parameters
   model.to(device)
@@ -105,13 +135,14 @@ if __name__ == '__main__':
     load_best_model_at_end = True,
     metric_for_best_model="micro f1 score",
     report_to="wandb",
+    fp16=True,
     adam_beta1=conf.train.adam_beta1,
     adam_beta2=conf.train.adam_beta2,
     adam_epsilon=conf.train.adam_epsilon,
     lr_scheduler_type=conf.train.lr_scheduler_type,
     fp16=conf.train.fp16
   )
-  trainer = Trainer(
+  trainer = CustomTrainer(
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
