@@ -1,10 +1,11 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from torch.utils.data import DataLoader
 from dataset_utils import load_test_dataset, num_to_label, num_to_label_binary
 from omegaconf import OmegaConf
 from general_classifier_train import set_seed
 from datasets import RE_Dataset
 from tqdm import tqdm
+from model import CustomModel
 
 import torch.nn.functional as F
 import pandas as pd
@@ -28,7 +29,9 @@ def inference(model, tokenized_sent, device):
       outputs = model(
           input_ids=data['input_ids'].to(device),
           attention_mask=data['attention_mask'].to(device),
-          token_type_ids=data['token_type_ids'].to(device)
+          token_type_ids=data['token_type_ids'].to(device), 
+          ss = data['ss'].to(device),
+          os = data['os'].to(device)
           )
     logits = outputs[0]
     prob = F.softmax(logits, dim=-1).detach().cpu().numpy()
@@ -39,6 +42,7 @@ def inference(model, tokenized_sent, device):
     output_prob.append(prob)
   
   return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
+
 
 
 if __name__ == '__main__':
@@ -58,11 +62,22 @@ if __name__ == '__main__':
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
 
+  # 스페셜 토큰 추가
+  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
+
   ## load my model
   BINARY_MODEL_NAME = './best_model/Binary'
   GENERAL_MODEL_NAME = './best_model/General'
-  binary_model = AutoModelForSequenceClassification.from_pretrained(BINARY_MODEL_NAME)
-  general_model = AutoModelForSequenceClassification.from_pretrained(GENERAL_MODEL_NAME)
+  
+  binary_model = CustomModel.load_pretrained(BINARY_MODEL_NAME, conf, 
+                                             config=AutoConfig.from_pretrained(conf.model.model_name))
+  general_model = CustomModel.load_pretrained(GENERAL_MODEL_NAME, conf, 
+                                             config=AutoConfig.from_pretrained(conf.model.model_name))
+
+  binary_model.encoder.resize_token_embeddings(len(tokenizer))
+  general_model.encoder.resize_token_embeddings(len(tokenizer))
+  
   binary_model.parameters
   general_model.parameters
   binary_model.to(device)
@@ -92,7 +107,7 @@ if __name__ == '__main__':
 
   # if row['probs'][0] > "학습시 정확도":
   for idx, row in binary_output.iterrows():
-    if row['probs'][0] > 0.75:
+    if row['probs'][0] > 0.765:
       false_prob = row['probs'][0]
       true_prob = row['probs'][1]
       a = [true_prob/29 for _ in range(30)]

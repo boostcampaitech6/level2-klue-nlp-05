@@ -1,8 +1,9 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
+from dataset_utils import load_data, label_to_num, tokenized_dataset
 from datasets import RE_Dataset
 from metrics import compute_metrics
+from model import CustomModel
 
 import numpy as np
 import pandas as pd
@@ -68,6 +69,10 @@ if __name__ == '__main__':
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
+  # 스페셜 토큰 추가
+  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
+
   # load dataset
   train_dataset = load_data('../dataset/train/general_train_true_labels.csv')
   dev_dataset = load_data('../dataset/train/general_dev_true_labels.csv')
@@ -76,12 +81,8 @@ if __name__ == '__main__':
   dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
-  if MODEL_NAME.split('-')[0] == 'xlm':
-    tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset_xlm(dev_dataset, tokenizer)
-  else:
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+  tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+  tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -95,9 +96,11 @@ if __name__ == '__main__':
   model_config = AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, 
-                                                              config=model_config)
-  print(model.config)
+  model = CustomModel(conf, config=model_config)
+  
+  # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
+  model.encoder.resize_token_embeddings(len(tokenizer))  
+  
   model.parameters
   model.to(device)
   

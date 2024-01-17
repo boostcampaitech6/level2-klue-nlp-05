@@ -1,10 +1,11 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
+from dataset_utils import load_data, label_to_num, tokenized_dataset
 from datasets import RE_Dataset
 from metrics import compute_metrics
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import Subset
+from model import CustomModel
 
 import pandas as pd
 import numpy as np
@@ -55,13 +56,17 @@ if __name__ == '__main__':
     set_seed(conf.utils.seed)
     
     # pair_list에 entity pair의 list를 저장하고 train set을 pair별로 분리
-    pair_list_train = ['PER-DAT', 'ORG-PER', 'PER-ORG', 
-                       'PER-POH', 'ORG-ORG', 'PER-PER']
+    pair_list_train = ['PER-DAT', 'PER-ORG', 
+                       'ORG-ORG', 'PER-PER']
     pair_separater(conf.path.train_path)
 
     # load model and tokenizer
     MODEL_NAME = conf.model.model_name
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+
+    # 스페셜 토큰 추가
+    special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+    tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
     # entity pair별로 학습진행
     for pair in pair_list_train:
@@ -70,12 +75,8 @@ if __name__ == '__main__':
         train_label = label_to_num(train_dataset['label'].values)
 
         # tokenizing dataset
-        if MODEL_NAME.split('-')[0] == 'xlm':
-            tokenized_train = tokenized_dataset_xlm(train_dataset, 
-                                                    tokenizer)
-        else:
-            tokenized_train = tokenized_dataset(train_dataset, 
-                                                tokenizer)
+        tokenized_train = tokenized_dataset(train_dataset, 
+                                            tokenizer)
 
         # make dataset for pytorch.
         RE_train_dataset = RE_Dataset(tokenized_train, 
@@ -97,9 +98,12 @@ if __name__ == '__main__':
             # setting model hyperparameter
             model_config = AutoConfig.from_pretrained(MODEL_NAME)
             model_config.num_labels = 30
-            model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME,
-                                                                       config=model_config)
-            print(model.config)
+
+            model = CustomModel(conf, config=model_config)
+
+            # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
+            model.encoder.resize_token_embeddings(len(tokenizer))
+            
             model.parameters
             model.to(device)
 
