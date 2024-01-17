@@ -1,9 +1,8 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
-from dataset_utils import load_data, label_to_num, tokenized_dataset
+from dataset_utils import load_data, label_to_num, tokenized_dataset, tokenized_dataset_xlm
 from datasets import RE_Dataset
 from metrics import compute_metrics
-from add_entity_token2 import *
 import numpy as np
 import pandas as pd
 import argparse
@@ -12,23 +11,24 @@ import torch
 import wandb
 import os
 
+from config.config import call_config
+import torch.nn as nn
+import torch.nn.functional as F
+from custom_model import CustomModel, CustomModel2
+from custom_tokenizer import Processor
 
 def set_seed(seed:int = 42):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(seed)
-    random.seed(seed)
-
+  torch.manual_seed(seed)
+  torch.cuda.manual_seed(seed)
+  torch.cuda.manual_seed_all(seed)  # if use multi-GPU
+  torch.backends.cudnn.deterministic = True
+  torch.backends.cudnn.benchmark = False
+  np.random.seed(seed)
+  random.seed(seed)
+    
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="1.2.14_config1")
-
-  args, _ = parser.parse_known_args()
-  conf = OmegaConf.load(f"./config/{args.config}.yaml")
+  conf = call_config()
 
   set_seed(42)
 
@@ -42,31 +42,43 @@ if __name__ == '__main__':
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
   # load dataset
-  train_dataset = pd.read_csv(conf.path.train_path)
-  dev_dataset =  pd.read_csv(conf.path.dev_path)
+  train_dataset = load_data("../dataset/train/train.csv", train=True)
+  dev_dataset = load_data("../dataset/train/dev.csv")
+
   train_label = label_to_num(train_dataset['label'].values)
   dev_label = label_to_num(dev_dataset['label'].values)
 
   # tokenizing dataset
-  tokenized_train = Processor(conf, tokenizer).read(train_dataset)
-  tokenized_dev = Processor(conf, tokenizer).read(dev_dataset)
+  if MODEL_NAME.split('-')[0] == 'xlm':
+    tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
+  else:
+    if conf.custom_model:
+      tokenized_train = Processor(conf, tokenizer).read(train_dataset, train=True)
+      tokenized_dev = Processor(conf, tokenizer).read(dev_dataset)
+    else:
+      tokenized_train = tokenized_dataset(train_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
   RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
+  
+  # Split train dataset into train, valid.
+  # RE_train_dataset, RE_dev_dataset = torch.utils.data.random_split(RE_train_dataset, [int(len(RE_train_dataset)*0.8), len(RE_train_dataset)-int(len(RE_train_dataset)*0.8)])
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
   print(device)
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-
-  if conf.model.add_entity_token:
-    model = Custom_Model(conf, config=model_config)
-    model.encoder.resize_token_embeddings(len(tokenizer))
-  else: 
+  if conf.custom_model==1:
+    model = CustomModel(MODEL_NAME, config=model_config)
+  elif conf.custom_model==2:
+    model = CustomModel2(MODEL_NAME, config=model_config)
+  else:
     model_config.num_labels = 30
     model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+    
+   
   model.parameters
   model.to(device)
 
@@ -113,7 +125,7 @@ if __name__ == '__main__':
     args=training_args,
     train_dataset=RE_train_dataset,
     eval_dataset=RE_dev_dataset,
-    compute_metrics=compute_metrics,
+    compute_metrics=compute_metrics
   )
   # best_trials = trainer.hyperparameter_search(n_trials=20, direction="maximize",backend="optuna", hp_space=optuna_hp_space) 
   # train model
