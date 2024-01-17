@@ -51,7 +51,7 @@ def tokenized_dataset(dataset, tokenizer):
     subject_type, object_type = row['subject_type'], row['object_type']
 
     new_sentence = ''
-    new_sentence += subject_word + '-' + object_word + '</s>' + '</s>'
+    new_sentence += subject_word + '-' + object_word + '[SEP]'
 
     if subject_start_idx < object_start_idx:
       new_sentence += sentence[:subject_start_idx]
