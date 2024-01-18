@@ -15,9 +15,9 @@ def tokenized_dataset(dataset, tokenizer):
       concat_entity,
       list(dataset['sentence']),
       return_tensors="pt",
+      max_length=195,
       padding=True,
       truncation=True,
-      max_length=256,
       add_special_tokens=True,
       )
   return tokenized_sentences
