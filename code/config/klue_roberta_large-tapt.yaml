@@ -1,24 +1,24 @@
 path:
-  train_path: ../dataset/train/train.csv
-  dev_path: ../dataset/train/dev.csv
-  test_path: ../dataset/test/test_data.csv
+  train_path: ../dataset/train/train_final.csv
+  dev_path: ../dataset/train/dev_final.csv
+  test_path: ../dataset/test/test_final.csv
   tapt_model_path: ./tapt/klue_roberta_large
 
 model:
   model_name: klue/roberta-large
-  use_tapt_model: False
+  use_tapt_model: True
 
 train:
   epochs: 10
-  batch_size: 32
-  learning_rate: 3e-5
-  save_steps: 0
-  warmup_steps: 500
-  weight_decay: 0.01
+  batch_size: 64
+  learning_rate: 1.0343185256317574e-05
+  save_steps: 1000
+  warmup_steps: 384
+  weight_decay: 0.14115743665194863
   logging_steps: 1000
   eval_steps: 1000
   fp16: True
-  gradient_accumulation_step: 4
+  gradient_accumulation_step: 1
 
 utils:
   seed: 42
