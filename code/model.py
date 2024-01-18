@@ -23,6 +23,24 @@ class FocalLoss(nn.Module):
         else:
             return F_loss
         
+class Attention(nn.Module):
+    def __init__(self, hidden_size):
+        super(Attention, self).__init__()
+        self.query_layer = nn.Linear(hidden_size, hidden_size)
+        self.key_layer = nn.Linear(hidden_size, hidden_size)
+        self.value_layer = nn.Linear(hidden_size, hidden_size)
+
+    def forward(self, query, key, value):
+        query = self.query_layer(query)
+        key = self.key_layer(key)
+        value = self.value_layer(value)
+
+        attention_scores = torch.matmul(query, key.transpose(-2, -1)) / (key.size(-1) ** 0.5)
+        attention_weights = torch.softmax(attention_scores, dim=-1)
+        attended_value = torch.matmul(attention_weights, value)
+
+        return attended_value
+        
 class CustomModel(nn.Module):
     def __init__(self, args, config):
         super().__init__()
@@ -51,8 +69,8 @@ class CustomModel(nn.Module):
         idx = torch.arange(input_ids.size(0)).to(input_ids.device)
         ss_emb = pooled_output[idx, ss]
         os_emb = pooled_output[idx, os]
-        fc_output = self.fc_layer(torch.cat((ss_emb, os_emb), dim=-1))
-        h = self.fc_layer(torch.cat((fc_output, cls_emb), dim=-1))
+        ent_emb = self.fc_layer(torch.cat((ss_emb, os_emb), dim=-1))
+        h = self.fc_layer(torch.cat((ent_emb, cls_emb), dim=-1))
         logits = self.classifier(h)
         outputs = (logits,)
         
@@ -61,24 +79,6 @@ class CustomModel(nn.Module):
             outputs = (loss,) + outputs
 
         return outputs
-    
-# class Attention(nn.Module):
-#     def __init__(self, hidden_size):
-#         super(Attention, self).__init__()
-#         self.query_layer = nn.Linear(hidden_size, hidden_size)
-#         self.key_layer = nn.Linear(hidden_size, hidden_size)
-#         self.value_layer = nn.Linear(hidden_size, hidden_size)
-
-#     def forward(self, query, key, value):
-#         query = self.query_layer(query)
-#         key = self.key_layer(key)
-#         value = self.value_layer(value)
-
-#         attention_scores = torch.matmul(query, key.transpose(-2, -1)) / (key.size(-1) ** 0.5)
-#         attention_weights = torch.softmax(attention_scores, dim=-1)
-#         attended_value = torch.matmul(attention_weights, value)
-
-#         return attended_value
 
 # class CustomModel(nn.Module):
 #     def __init__(self, args, config):
@@ -109,8 +109,8 @@ class CustomModel(nn.Module):
 #         idx = torch.arange(input_ids.size(0)).to(input_ids.device)
 #         ss_emb = pooled_output[idx, ss]
 #         os_emb = pooled_output[idx, os]
-#         fc_output = self.fc_layer(torch.cat((ss_emb, os_emb), dim=-1))
-#         attention_output = self.attention(cls_emb.unsqueeze(1), fc_output.unsqueeze(1), fc_output.unsqueeze(1))
+#         ent_emb = self.fc_layer(torch.cat((ss_emb, os_emb), dim=-1))
+#         attention_output = self.attention(cls_emb.unsqueeze(1), ent_emb.unsqueeze(1), ent_emb.unsqueeze(1))
 #         h = attention_output.squeeze(1)
 #         logits = self.classifier(h)
 #         outputs = (logits,)
