@@ -63,7 +63,7 @@ def compute_metrics(pred):
       'accuracy': acc,
   }
 
-# 재혁추가
+
 def compute_metrics_binary(pred):
   """ validation을 위한 metrics function """
   labels = pred.label_ids

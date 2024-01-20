@@ -102,9 +102,5 @@ def add_typed_entity_marker_punct(dataset):
         result.append(new_sentence)
     
     df['sentence'] = result
-    # df.to_csv('typed_entity_marker_punct_train.csv')
 
     return df
-
-# add_typed_entity_marker_original("../dataset/train/train.csv")
-# add_typed_entity_marker_punct("../dataset/train/train.csv") 

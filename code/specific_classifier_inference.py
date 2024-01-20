@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from dataset_utils import load_test_dataset, num_to_label, num_to_label_binary
 from omegaconf import OmegaConf
 from general_classifier_train import set_seed
-from datasets import RE_Dataset
+from custom_datasets import RE_Dataset
 from model import CustomModel
 from tqdm import tqdm
 

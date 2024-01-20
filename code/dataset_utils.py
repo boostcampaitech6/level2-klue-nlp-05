@@ -1,24 +1,10 @@
+from tqdm.auto import tqdm
 import pickle as pickle
 import pandas as pd
 import torch
 import ast
 
-from config.config import call_config
-from entity_token_adder import add_typed_entity_marker_punct
-from preprocessing import preprocessing
-
-conf = call_config()
-
-def preprocessing_dataset(dataset):
-  """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
-  out_dataset = pd.DataFrame({'id':dataset['id'], 
-                              'sentence':dataset['sentence'],
-                              'subject_word':dataset['subject_word'],
-                              'object_word':dataset['object_word'],
-                              'label':dataset['label'],})
-  return out_dataset
-
-def tokenized_dataset(dataset, tokenizer):
+def tokenized_dataset_entity(dataset, tokenizer):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   sentences = []
   ss, os = [], []
@@ -90,24 +76,71 @@ def tokenized_dataset(dataset, tokenizer):
   return tokenized_sentences
 
 
+def tokenized_dataset_prompt(dataset, tokenizer):
+  """ tokenizer에 따라 sentence를 tokenizing 합니다."""
+  concat_entity = []
+  for e01, e02 in zip(dataset['subject_word'], dataset['object_word']):
+    temp = ''
+    temp = e01 + "와 " + e02 + "의 관계"
+    concat_entity.append(temp)
+  tokenized_sentences = tokenizer(
+      concat_entity,
+      list(dataset['sentence']),
+      return_tensors="pt",
+      max_length=195,
+      padding=True,
+      truncation=True,
+      add_special_tokens=True,
+      )
+  return tokenized_sentences
+
+
+def tokenized_dataset_xlm(dataset, tokenizer):
+  """dataset을 주어진 tokenizer로 tokenize하는 함수(xlm only)
+
+  Args:
+      dataset (DataFrame): 변곧내(변수이름이 곧 내용)
+      tokenizer (Any): 사용하고자 하는 tokenizer
+
+  Returns:
+      Any: tokenized된 문장들
+  """
+  concat_entity = []
+  for e01, e02 in zip(dataset['subject_word'], dataset['object_word']):
+    temp = ''
+    temp = e01 + '</s></s>' + e02
+    concat_entity.append(temp)
+  tokenized_sentences = tokenizer(
+      concat_entity,
+      list(dataset['sentence']),
+      return_tensors="pt",
+      padding=True,
+      truncation=True,
+      max_length=256,
+      add_special_tokens=True,
+      )
+  return tokenized_sentences
+
+
+def tokenized_dataset_pretrain(dataset, tokenizer):
+  """ tokenizer에 따라 sentence를 tokenizing 합니다."""
+  data = []
+  for _, item in tqdm(dataset.iterrows(), desc="tokenizing", total=len(dataset)):
+    subj = item["subject_word"]
+    obj = item["object_word"]
+    concat_entity = subj + "와 " + obj + "의 관계"
+    output = tokenizer(concat_entity, item["sentence"], padding=True, truncation=True, max_length=256, add_special_tokens=True)
+    data.append(output)
+  return data
+
+
 def load_data(dataset_dir):
     """ csv 파일을 경로에 맡게 불러 옵니다. """
     dataset = pd.read_csv(dataset_dir)  
     return dataset
 
 
-def load_test_dataset(dataset_dir, tokenizer):
-    """
-      test dataset을 불러온 후,
-      tokenizing 합니다.
-    """
-    test_dataset = load_data(dataset_dir)
-    test_label = list(map(int,test_dataset['label'].values))
-    # tokenizing dataset
-    tokenized_test = tokenized_dataset(test_dataset, tokenizer)
-
-    return test_dataset['id'], tokenized_test, test_label
-def load_test_dataset(dataset_dir, tokenizer, MODEL_NAME=None):
+def load_test_dataset(dataset_dir, tokenizer, conf):
   """
     test dataset을 불러온 후,
     tokenizing 합니다.
@@ -115,11 +148,16 @@ def load_test_dataset(dataset_dir, tokenizer, MODEL_NAME=None):
   test_dataset = load_data(dataset_dir)
   test_label = list(map(int,test_dataset['label'].values))
   # tokenizing dataset
-  if MODEL_NAME and MODEL_NAME[:10] == "xlm-roberta":
+  if conf.model.mode_name[:10] == "xlm-roberta":
     tokenized_test = tokenized_dataset_xlm(test_dataset, tokenizer)
   else:
-    tokenized_test = tokenized_dataset(test_dataset, tokenizer)
+    tokenized_test = tokenized_dataset_prompt(test_dataset, tokenizer)
+
+  if conf.utils.isCustom:
+    tokenized_test = tokenized_dataset_entity(test_dataset, tokenizer)
+
   return test_dataset['id'], tokenized_test, test_label
+
 
 def label_to_num(label):
   num_label = []

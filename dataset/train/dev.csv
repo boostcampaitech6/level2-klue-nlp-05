@@ -1,4 +1,4 @@
-﻿id,sentence,subject_entity,object_entity,label,source
+id,sentence,subject_entity,object_entity,label,source
 0,20대 남성 A(26)씨가 아버지 치료비를 위해 B(30)씨가 모아둔 돈을 훔쳐 인터넷 방송 BJ에게 '별풍선'으로 쏜 사실이 알려졌다.,"{'word': 'A', 'start_idx': 7, 'end_idx': 7, 'type': 'PER'}","{'word': '30', 'start_idx': 29, 'end_idx': 30, 'type': 'NOH'}",no_relation,wikitree
 1,"그러나 심 의원은 보좌진이 접속 권한을 받아 정부 업무추진비 사용 내역 등을 다운받았음에도 정부가 허위 사실을 유포하는 등 국정감사 활동을 방해하고 있다고 반박했고, 김동연 경제부총리 겸 기획재정부 장관과 김재훈 재정정보원장, 기재부 관계자 등을 무고 등 혐의로 전날 맞고발했다.","{'word': '심 의원', 'start_idx': 4, 'end_idx': 7, 'type': 'PER'}","{'word': '정부', 'start_idx': 25, 'end_idx': 26, 'type': 'ORG'}",no_relation,wikipedia
 2,"영화 《룸》에서 감금되어 살아가는 여자의 아들 '잭' 역으로 주목받으며, 크리틱스 초이스 영화상 최우수 아역연기상, 캐나다 스크린 어워드(캐나다 영화 & 텔레비전 아카데미상) 영화부문 최우수 남우주연상을 수상하였고, 미국 배우 조합상(SAG) 최우수 남우조연상에 후보 지명되었다.","{'word': '잭', 'start_idx': 27, 'end_idx': 27, 'type': 'PER'}","{'word': '캐나다 스크린 어워드', 'start_idx': 65, 'end_idx': 75, 'type': 'POH'}",no_relation,wikipedia

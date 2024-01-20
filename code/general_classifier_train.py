@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 from omegaconf import OmegaConf
 from dataset_utils import load_data, label_to_num, tokenized_dataset
-from datasets import RE_Dataset
+from custom_datasets import RE_Dataset
 from metrics import compute_metrics
 from model import CustomModel
 
