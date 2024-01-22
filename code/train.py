@@ -1,15 +1,13 @@
-from transformers import AutoTokenizer, AutoConfig, Trainer, TrainingArguments
-from omegaconf import OmegaConf
-from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
-from metrics import compute_metrics
-from model import CustomModel
-
+import pandas as pd
 import numpy as np
-import argparse
 import random
 import torch
 import wandb
+from omegaconf import OmegaConf
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification, BertTokenizer
 
+from metrics import compute_metrics
+from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
 
 def set_seed(seed:int = 42):
     torch.manual_seed(seed)
@@ -22,7 +20,7 @@ def set_seed(seed:int = 42):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="best_config")
+  parser.add_argument("--config", "-c", type=str, default="base_config")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
@@ -35,9 +33,6 @@ if __name__ == '__main__':
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-  # 스페셜 토큰 추가
-  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
-  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   # load dataset
   train_dataset = load_data(conf.path.train_path)
@@ -59,11 +54,11 @@ if __name__ == '__main__':
   print(device)
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  model = CustomModel(conf, config=model_config)
-  # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
-  model.encoder.resize_token_embeddings(len(tokenizer))
+  model_config.num_labels = 30
+
+  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  print(model.config)
   model.parameters
-  
   model.to(device)
   
   # 사용한 option 외에도 다양한 option들이 있습니다.
@@ -86,8 +81,8 @@ if __name__ == '__main__':
                                 # `epoch`: Evaluate every end of epoch.
     eval_steps=conf.train.eval_steps,            # evaluation step.
     load_best_model_at_end = True,
-    metric_for_best_model="micro f1 score",
-    report_to="wandb",
+    metric_for_best_model='micro f1 score',
+    report_to='wandb',
     fp16=True
   )
   

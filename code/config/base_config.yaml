@@ -1,10 +1,10 @@
 path:
   train_path: ../dataset/train/train_final.csv
-  dev_path: ../dataset/train/dev_final.csv
+  dev_path: ../dataset/train/validation_final.csv
   test_path: ../dataset/test/test_final.csv
 
 model:
-  model_name: klue/roberta-large
+  model_name: klue/bert-base
 
 train:
   epochs: 10

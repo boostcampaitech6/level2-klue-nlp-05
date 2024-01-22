@@ -13,6 +13,8 @@ import torch
 import numpy as np
 import argparse
 
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+
 
 def inference(model, tokenized_sent, device):
   """
@@ -44,8 +46,8 @@ def inference(model, tokenized_sent, device):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="best_config")
-  parser.add_argument('--model_dir', "-m", type=str, default="./best_model/model.pt")
+  parser.add_argument("--config", "-c", type=str, default="base_config")
+  parser.add_argument('--model_dir', "-m", type=str, default="./best_model/")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
@@ -59,16 +61,11 @@ if __name__ == '__main__':
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
-  # 스페셜 토큰 추가
-  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
-  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   ## load my model
   MODEL_NAME = conf.model.model_name
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  model = CustomModel(conf, config=model_config)
-  model.encoder.resize_token_embeddings(len(tokenizer))
-  model.load_state_dict(torch.load(args.model_dir))
+  model = AutoModelForSequenceClassification.from_pretrained(args.model_dir)
   model.parameters
   model.to(device)
 
