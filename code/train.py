@@ -4,12 +4,12 @@ import random
 import torch
 import argparse
 from omegaconf import OmegaConf
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, Trainer, TrainingArguments
 import wandb
 
-from metrics import compute_metrics
-from load_data import RE_Dataset, load_data, tokenized_dataset
 from model import CustomModel
+from load_data import RE_Dataset, load_data, tokenized_dataset, label_to_num
+from metrics import compute_metrics
 
 
 def set_seed(seed:int = 42):
@@ -37,20 +37,34 @@ if __name__ == '__main__':
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
   # add special tokens
-  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  special_tokens = ['<S:ORG>','</S:ORG>', 
+                    '<S:PER>', '</S:PER>', 
+                    '<S:POH>', '</S:POH>', 
+                    '<S:LOC>', '</S:LOC>',
+                    '<S:DAT>', '</S:DAT>',
+                    '<S:NOH>', '</S:NOH>', 
+                    '<O:ORG>', '</O:ORG>', 
+                    '<O:PER>', '</O:PER>', 
+                    '<O:POH>', '</O:POH>', 
+                    '<O:LOC>', '</O:LOC>',
+                    '<O:DAT>', '</O:DAT>', 
+                    '<O:NOH>', '</O:NOH>']
   tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   # load dataset
   train_dataset = load_data(conf.path.train_path)
   validation_dataset = load_data(conf.path.validation_path)
 
+  train_label = label_to_num(train_dataset['label'].values)
+  validation_label = label_to_num(validation_dataset['label'].values)
+
   # tokenizing dataset
   tokenized_train = tokenized_dataset(train_dataset, tokenizer)
   tokenized_validation = tokenized_dataset(validation_dataset, tokenizer)
 
   # make dataset for pytorch.
-  RE_train_dataset = RE_Dataset(tokenized_train, train_dataset['label'].values)
-  RE_dev_dataset = RE_Dataset(tokenized_validation, validation_dataset['label'].values)
+  RE_train_dataset = RE_Dataset(tokenized_train, train_label)
+  RE_dev_dataset = RE_Dataset(tokenized_validation, validation_label)
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
@@ -58,7 +72,7 @@ if __name__ == '__main__':
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model = CustomModel(conf, config=model_config)
-  # resize model embedding size
+  # resize token embeddings
   model.encoder.resize_token_embeddings(len(tokenizer))
   model.parameters
   

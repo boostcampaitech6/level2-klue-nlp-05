@@ -14,10 +14,6 @@ from train import set_seed
 
 
 def inference(model, tokenized_sent, device):
-  """
-    test dataset을 DataLoader로 만들어 준 후,
-    batch_size로 나눠 model이 예측 합니다.
-  """
   dataloader = DataLoader(tokenized_sent, batch_size=16, shuffle=False)
   model.eval()
   output_pred = []
@@ -51,40 +47,47 @@ if __name__ == '__main__':
   print(args)
   
   set_seed(conf.utils.seed)
-  """
-    주어진 dataset csv 파일과 같은 형태일 경우 inference 가능한 코드입니다.
-  """
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
   # load tokenizer
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
-  # 스페셜 토큰 추가
-  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  # add special tokens
+  special_tokens = ['<S:ORG>','</S:ORG>', 
+                    '<S:PER>', '</S:PER>', 
+                    '<S:POH>', '</S:POH>', 
+                    '<S:LOC>', '</S:LOC>',
+                    '<S:DAT>', '</S:DAT>',
+                    '<S:NOH>', '</S:NOH>', 
+                    '<O:ORG>', '</O:ORG>', 
+                    '<O:PER>', '</O:PER>', 
+                    '<O:POH>', '</O:POH>', 
+                    '<O:LOC>', '</O:LOC>',
+                    '<O:DAT>', '</O:DAT>', 
+                    '<O:NOH>', '</O:NOH>']
   tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
-  ## load my model
+  # load my model
   MODEL_NAME = conf.model.model_name
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model = CustomModel(conf, config=model_config)
+  # resize token embeddings
   model.encoder.resize_token_embeddings(len(tokenizer))
   model.load_state_dict(torch.load(args.model_dir))
   model.parameters
   model.to(device)
 
-  ## load test datset
+  # load test datset
   test_dataset_dir = conf.path.test_path
   test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer)
   Re_test_dataset = RE_Dataset(test_dataset ,test_label)
 
-  ## predict answer
-  pred_answer, output_prob = inference(model, Re_test_dataset, device) # model에서 class 추론
-  pred_answer = num_to_label(pred_answer) # 숫자로 된 class를 원래 문자열 라벨로 변환.
+  # predict answer
+  pred_answer, output_prob = inference(model, Re_test_dataset, device)
+  pred_answer = num_to_label(pred_answer)
   
-  ## make csv file with predicted answer
-  #########################################################
-  # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.
+  # make csv file with predicted answer
   output = pd.DataFrame({'id':test_id,'pred_label':pred_answer,'probs':output_prob,})
 
   output.to_csv('./prediction/submission.csv', index=False) # 최종적으로 완성된 예측한 라벨 csv 파일 형태로 저장.
-  #### 필수!! ##############################################
   print('---- Finish! ----')

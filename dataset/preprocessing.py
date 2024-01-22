@@ -1,8 +1,8 @@
 import pandas as pd
 import ast
 
-def data_preparation(df):
-    # seperate subject_entity
+def extract_columns(df):
+    # subject_entity
     subject_word, subject_start_idx, subject_end_idx, subject_type = [], [], [], []
     for data in df['subject_entity']:
         data = ast.literal_eval(data)
@@ -11,7 +11,7 @@ def data_preparation(df):
         subject_end_idx.append(data['end_idx'])
         subject_type.append(data['type'])
     df['subject_word'], df['subject_start_idx'], df['subject_end_idx'], df['subject_type'] = subject_word, subject_start_idx, subject_end_idx, subject_type
-    # seperate object_entity
+    # object_entity
     object_word, object_start_idx, object_end_idx, object_type = [], [], [], []
     for data in df['object_entity']:
         data = ast.literal_eval(data)
@@ -25,13 +25,11 @@ def data_preparation(df):
 
     return df
 
-# def data_cleaning(df):
-#     # 중복 데이터 제거
-#     # sentence, subject_word, object_word, label이 중복인 데이터 제거
-#     df.drop_duplicates(subset=['sentence', 'subject_word','object_word','label'], inplace=True)
-#     # sentence, subject_word, object_word가 중복이지만 레이블이 다른 데이터 -> no_relation 데이터 제거
-#     duplicates = df[df.duplicated(subset=['sentence', 'subject_word','object_word'], keep=False)]
-#     df.drop(duplicates[duplicates['label'] == 'no_relation'].index, inplace=True)
+def data_cleaning(df):
+    # remove duplicates
+    df.drop_duplicates(subset=['sentence', 'subject_word','object_word','label'], inplace=True)
+    duplicates = df[df.duplicated(subset=['sentence', 'subject_word','object_word'], keep=False)]
+    df.drop(duplicates[duplicates['label'] == 'no_relation'].index, inplace=True)
 #     # label별 entity 타입 수정
 #     # 1. org:top_members/employees
 #     df['subject_type'][df[(df['label']=='org:top_members/employees') & (df['subject_type']=='PER')].index] = 'ORG'
@@ -117,11 +115,11 @@ def data_preparation(df):
 #     # 29. per:religion
 #     df['object_type'][df[(df['label']=='per:religion') & (df['object_type']=='LOC')].index] = 'POH'
 
-#     return df
+    return df
 
 train, validation, test = pd.read_csv("./train/train.csv"), pd.read_csv("./validation/validation.csv"), pd.read_csv("./test/test.csv")
-train, validation, test = data_preparation(train), data_preparation(validation), data_preparation(test)
-# train = data_cleaning(train)
+train, validation, test = extract_columns(train), extract_columns(validation), extract_columns(test)
+train = data_cleaning(train)
 train.to_csv("./train/train_final.csv", index=False)
 validation.to_csv('./validation/validation_final.csv', index=False)
 test.to_csv("./test/test_final.csv", index=False)
