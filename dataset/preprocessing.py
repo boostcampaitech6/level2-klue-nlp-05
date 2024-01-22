@@ -119,9 +119,9 @@ def data_preparation(df):
 
 #     return df
 
-train, validation, test = pd.read_csv("./train/train.csv"), pd.read_csv("./train/validation.csv"), pd.read_csv("./test/test.csv")
+train, validation, test = pd.read_csv("./train/train.csv"), pd.read_csv("./validation/validation.csv"), pd.read_csv("./test/test.csv")
 train, validation, test = data_preparation(train), data_preparation(validation), data_preparation(test)
 # train = data_cleaning(train)
 train.to_csv("./train/train_final.csv", index=False)
-validation.to_csv('./train/validation_final.csv', index=False)
+validation.to_csv('./validation/validation_final.csv', index=False)
 test.to_csv("./test/test_final.csv", index=False)

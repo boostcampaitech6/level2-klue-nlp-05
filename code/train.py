@@ -2,12 +2,15 @@ import pandas as pd
 import numpy as np
 import random
 import torch
-import wandb
+import argparse
 from omegaconf import OmegaConf
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification, BertTokenizer
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+import wandb
 
 from metrics import compute_metrics
-from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
+from load_data import RE_Dataset, load_data, tokenized_dataset
+from model import CustomModel
+
 
 def set_seed(seed:int = 42):
     torch.manual_seed(seed)
@@ -33,32 +36,32 @@ if __name__ == '__main__':
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+  # add special tokens
+  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
+  tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   # load dataset
   train_dataset = load_data(conf.path.train_path)
-  dev_dataset = load_data(conf.path.dev_path)
-
-  train_label = label_to_num(train_dataset['label'].values)
-  dev_label = label_to_num(dev_dataset['label'].values)
+  validation_dataset = load_data(conf.path.validation_path)
 
   # tokenizing dataset
   tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-  tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+  tokenized_validation = tokenized_dataset(validation_dataset, tokenizer)
 
   # make dataset for pytorch.
-  RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
+  RE_train_dataset = RE_Dataset(tokenized_train, train_dataset['label'].values)
+  RE_dev_dataset = RE_Dataset(tokenized_validation, validation_dataset['label'].values)
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
   print(device)
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  model_config.num_labels = 30
-
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
-  print(model.config)
+  model = CustomModel(conf, config=model_config)
+  # resize model embedding size
+  model.encoder.resize_token_embeddings(len(tokenizer))
   model.parameters
+  
   model.to(device)
   
   # 사용한 option 외에도 다양한 option들이 있습니다.

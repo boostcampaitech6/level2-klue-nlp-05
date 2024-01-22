@@ -1,14 +1,15 @@
-from transformers import AutoTokenizer, AutoConfig, Trainer, TrainingArguments
-from omegaconf import OmegaConf
-from load_data import RE_Dataset, load_data, label_to_num, tokenized_dataset
-from metrics import compute_metrics
-from model import CustomModel
-
+import pandas as pd
 import numpy as np
-import argparse
 import random
 import torch
+import argparse
+from omegaconf import OmegaConf
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
 import wandb
+
+from metrics import compute_metrics
+from load_data import RE_Dataset, load_data, tokenized_dataset
+from model import CustomModel
 
 
 def set_seed(seed:int = 42):

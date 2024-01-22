@@ -1,6 +1,6 @@
 path:
   train_path: ../dataset/train/train_final.csv
-  dev_path: ../dataset/train/validation_final.csv
+  validation_path: ../dataset/validation/validation_final.csv
   test_path: ../dataset/test/test_final.csv
 
 model:
