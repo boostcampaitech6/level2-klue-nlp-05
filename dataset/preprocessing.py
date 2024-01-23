@@ -30,93 +30,9 @@ def data_cleaning(df):
     df.drop_duplicates(subset=['sentence', 'subject_word','object_word','label'], inplace=True)
     duplicates = df[df.duplicated(subset=['sentence', 'subject_word','object_word'], keep=False)]
     df.drop(duplicates[duplicates['label'] == 'no_relation'].index, inplace=True)
-#     # label별 entity 타입 수정
-#     # 1. org:top_members/employees
-#     df['subject_type'][df[(df['label']=='org:top_members/employees') & (df['subject_type']=='PER')].index] = 'ORG'
-#     df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='ORG')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='LOC')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:top_members/employees') & (df['object_type']=='NOH')].index] = 'POH'
-#     # 2. org:members
-#     df['subject_type'][df[(df['label']=='org:members') & (df['subject_type']=='PER')].index] = 'ORG'
-#     df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='PER')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='NOH')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:members') & (df['object_type']=='DAT')].index] = 'POH'
-#     # 3. org:product
-#     df['object_type'][df[df['label']=='org:product'].index] = 'POH'
-#     # 4. per:title
-#     df['object_type'][df[df['label']=='per:title'].index] = 'POH'
-#     # 5. org:alternate_names
-#     df['object_type'][df[(df['label']=='org:alternate_names') & (df['object_type']=='PER')].index] = 'ORG'
-#     df['object_type'][df[(df['label']=='org:alternate_names') & (df['object_type']=='DAT')].index] = 'POH'
-#     # 6. per:employee_of
-#     df['object_type'][df[(df['label']=='per:employee_of') & (df['object_type']=='DAT')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:employee_of') & (df['object_type']=='NOH')].index] = 'POH'
-#     # 7. org:place_of_headquarters
-#     df['subject_type'][df[(df['label']=='org:place_of_headquarters') & (df['subject_type']=='PER')].index] = 'ORG'
-#     df['object_type'][df[(df['label']=='org:place_of_headquarters') & (df['object_type']=='DAT')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:place_of_headquarters') & (df['object_type']=='NOH')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:place_of_headquarters') & (df['object_type']=='PER')].index] = 'POH'
-#     # 8. per:product
-#     df['object_type'][df[df['label']=='per:product'].index] = 'POH'
-#     # 9. org:number_of_employees/members
-#     # 10. per:children
-#     df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='LOC')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='NOH')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='DAT')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:children') & (df['object_type']=='ORG')].index] = 'POH'
-#     # 11. per:place_of_residence
-#     df['object_type'][df[(df['label']=='per:place_of_residence') & (df['object_type']=='ORG')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:place_of_residence') & (df['object_type']=='DAT')].index] = 'POH'
-#     # 12. per:alternate_names
-#     df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='ORG')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='LOC')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:alternate_names') & (df['object_type']=='ORG')].index] = 'POH'
-#     # 13. per:other_family
-#     df['object_type'][df[(df['label']=='per:other_family') & (df['object_type']=='LOC')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:other_family') & (df['object_type']=='ORG')].index] = 'POH'
-#     # 14. per:colleagues
-#     df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='ORG')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='DAT')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:colleagues') & (df['object_type']=='LOC')].index] = 'POH'
-#     # 15. per:origin
-#     df['object_type'][df[(df['label']=='per:origin') & (df['object_type']=='DAT')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:origin') & (df['object_type']=='PER')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:origin') & (df['object_type']=='NOH')].index] = 'POH'
-#     # 16. per:siblings
-#     # 17. per:spouse
-#     df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='LOC')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='ORG')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:spouse') & (df['object_type']=='DAT')].index] = 'POH'
-#     # 18. org:founded
-#     # 19. org:political/religious_affiliation
-#     df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='LOC')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='PER')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='org:political/religious_affiliation') & (df['object_type']=='DAT')].index] = 'POH'
-#     # 20. org:member_of
-#     df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='NOH')].index] = 'POH'
-#     df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='DAT')].index] = 'POH'
-#     df['object_type'][df[(df['label']==' org:member_of') & (df['object_type']=='PER')].index] = 'POH'
-#     # 21. per:parents
-#     df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='LOC')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='DAT')].index] = 'POH'
-#     df['object_type'][df[(df['label']=='per:parents') & (df['object_type']=='NOH')].index] = 'POH'
-#     # 22. org:dissolved
-#     # 23. per:schools_attended
-#     df['object_type'][df[(df['label']=='per:schools_attended') & (df['object_type']=='LOC')].index] = 'ORG'
-#     # 24. per:date_of_death
-#     df['object_type'][df[df['label']=='per:date_of_death'].index] = 'DAT'
-#     # 25. per:date_of_birth
-#     df['object_type'][df[df['label']=='per:date_of_birth'].index] = 'DAT'
-#     # 26. per:place_of_birth
-#     df['object_type'][df[df['label']=='per:place_of_birth'].index] = 'LOC'
-#     # 27. per:place_of_death
-#     df['object_type'][df[df['label']=='per:place_of_death'].index] = 'LOC'
-#     # 28. org:founded_by
-#     # 29. per:religion
-#     df['object_type'][df[(df['label']=='per:religion') & (df['object_type']=='LOC')].index] = 'POH'
 
     return df
-
+    
 train, validation, test = pd.read_csv("./train/train.csv"), pd.read_csv("./validation/validation.csv"), pd.read_csv("./test/test.csv")
 train, validation, test = extract_columns(train), extract_columns(validation), extract_columns(test)
 train = data_cleaning(train)

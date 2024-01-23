@@ -37,18 +37,7 @@ if __name__ == '__main__':
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
   # add special tokens
-  special_tokens = ['<S:ORG>','</S:ORG>', 
-                    '<S:PER>', '</S:PER>', 
-                    '<S:POH>', '</S:POH>', 
-                    '<S:LOC>', '</S:LOC>',
-                    '<S:DAT>', '</S:DAT>',
-                    '<S:NOH>', '</S:NOH>', 
-                    '<O:ORG>', '</O:ORG>', 
-                    '<O:PER>', '</O:PER>', 
-                    '<O:POH>', '</O:POH>', 
-                    '<O:LOC>', '</O:LOC>',
-                    '<O:DAT>', '</O:DAT>', 
-                    '<O:NOH>', '</O:NOH>']
+  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
   tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   # load dataset
@@ -75,11 +64,8 @@ if __name__ == '__main__':
   # resize token embeddings
   model.encoder.resize_token_embeddings(len(tokenizer))
   model.parameters
-  
   model.to(device)
-  
-  # 사용한 option 외에도 다양한 option들이 있습니다.
-  # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
+
   training_args = TrainingArguments(
     output_dir='./results',          # output directory
     save_total_limit=conf.utils.top_k,  # number of total save model.

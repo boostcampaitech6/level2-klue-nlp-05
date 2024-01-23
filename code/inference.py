@@ -39,7 +39,7 @@ def inference(model, tokenized_sent, device):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="best_config")
+  parser.add_argument("--config", "-c", type=str, default="best")
   parser.add_argument('--model_dir', "-m", type=str, default="./best_model/model.pt")
 
   args, _ = parser.parse_known_args()
@@ -53,18 +53,7 @@ if __name__ == '__main__':
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
   # add special tokens
-  special_tokens = ['<S:ORG>','</S:ORG>', 
-                    '<S:PER>', '</S:PER>', 
-                    '<S:POH>', '</S:POH>', 
-                    '<S:LOC>', '</S:LOC>',
-                    '<S:DAT>', '</S:DAT>',
-                    '<S:NOH>', '</S:NOH>', 
-                    '<O:ORG>', '</O:ORG>', 
-                    '<O:PER>', '</O:PER>', 
-                    '<O:POH>', '</O:POH>', 
-                    '<O:LOC>', '</O:LOC>',
-                    '<O:DAT>', '</O:DAT>', 
-                    '<O:NOH>', '</O:NOH>']
+  special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
   tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
   # load my model

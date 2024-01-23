@@ -4,12 +4,12 @@ import random
 import torch
 import argparse
 from omegaconf import OmegaConf
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from transformers import AutoTokenizer, AutoConfig, Trainer, TrainingArguments
 import wandb
 
-from metrics import compute_metrics
-from load_data import RE_Dataset, load_data, tokenized_dataset
 from model import CustomModel
+from load_data import RE_Dataset, load_data, tokenized_dataset, label_to_num
+from metrics import compute_metrics
 
 
 def set_seed(seed:int = 42):
@@ -47,7 +47,7 @@ if __name__ == '__main__':
   # load model and tokenizer
   MODEL_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-  # 스페셜 토큰 추가
+  # add special tokens
   special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
   tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
 
@@ -72,14 +72,11 @@ if __name__ == '__main__':
   # setting model hyperparameter
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
   model = CustomModel(conf, config=model_config)
-  # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
+  # resize token embeddings
   model.encoder.resize_token_embeddings(len(tokenizer))
   model.parameters
-  
   model.to(device)
   
-  # 사용한 option 외에도 다양한 option들이 있습니다.
-  # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
   training_args = TrainingArguments(
     output_dir='./results',          # output directory
     save_total_limit=conf.utils.top_k,  # number of total save model.
