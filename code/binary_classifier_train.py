@@ -3,7 +3,7 @@ from omegaconf import OmegaConf
 from dataset_utils import load_data, label_to_num_binary, tokenized_dataset
 from custom_datasets import RE_Dataset
 from metrics import compute_metrics_binary
-from model import CustomModel
+from custom_model import CustomModel3
 
 import numpy as np
 import argparse

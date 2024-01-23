@@ -6,3 +6,5 @@ code/best_model
 code/tapt/*
 code/best_model/pytorch_model.bin
 *.pt
+exp/wandb/*
+code/model_save/*

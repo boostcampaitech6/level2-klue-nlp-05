@@ -3,7 +3,7 @@ from omegaconf import OmegaConf
 from dataset_utils import load_data, label_to_num, tokenized_dataset
 from custom_datasets import RE_Dataset
 from metrics import compute_metrics
-from model import CustomModel
+from custom_model import CustomModel3
 
 import numpy as np
 import pandas as pd
@@ -100,7 +100,7 @@ if __name__ == '__main__':
   model_config = AutoConfig.from_pretrained(MODEL_NAME)
   model_config.num_labels = 30
 
-  model = CustomModel(conf, config=model_config)
+  model = CustomModel3(conf, config=model_config)
   
   # 스페셜 토큰 추가로 인한 모델의 임베딩 크기 조정
   model.encoder.resize_token_embeddings(len(tokenizer))  

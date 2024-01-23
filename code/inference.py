@@ -5,15 +5,16 @@ from dataset_utils import load_test_dataset, num_to_label
 from custom_datasets import RE_Dataset
 from base_train import set_seed
 from tqdm import tqdm
-from model import CustomModel
 
 import torch.nn.functional as F
 import pandas as pd
 import torch
-
 import numpy as np
 import argparse
+import os
 
+from config.config import call_config
+from custom_model import CustomModel, CustomModel2, CustomModel3
 
 def custom_inference(model, tokenized_sent, device):
   """
@@ -59,7 +60,7 @@ def base_inference(model, tokenized_sent, device):
           attention_mask=data['attention_mask'].to(device),
           token_type_ids=data['token_type_ids'].to(device)
           )
-    logits = outputs[0]
+
     prob = F.softmax(logits, dim=-1).detach().cpu().numpy()
     logits = logits.detach().cpu().numpy()
     result = np.argmax(logits, axis=-1)
@@ -73,7 +74,7 @@ def base_inference(model, tokenized_sent, device):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("--config", "-c", type=str, default="base_config")
-  parser.add_argument('--model_dir', "-m", type=str, default="./best_model/model.pt")
+  parser.add_argument('--model_dir', "-m", type=str, default="./best_model")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
@@ -88,16 +89,27 @@ if __name__ == '__main__':
   Tokenizer_NAME = conf.model.model_name
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
   if conf.utils.TOKEN_TYPE == 1:
-    # 스페셜 토큰 추가
+    # 스페셜 토큰 (기호형)
     special_tokens = ['<S:ORG>','<S:PER>','<S:POH>','<S:LOC>','<S:DAT>','<S:NOH>','</S:ORG>','</S:PER>','</S:POH>','</S:LOC>','</S:DAT>','</S:NOH>','<O:ORG>','<O:PER>','<O:POH>','<O:LOC>','<O:DAT>','<O:NOH>','</O:ORG>','</O:PER>','</O:POH>','</O:LOC>','</O:DAT>','</O:NOH>']
     tokenizer.add_special_tokens({'additional_special_tokens': special_tokens})
-  ## TODO 본인토큰타입 맞춰서 추가
+  elif conf.utils.TOKEN_TYPE == 2:
+    # 일반 토큰 (신근이형)
+    new_tokens = ['[SE]','[/SE]','[OE]','[/OE]']
+    tokenizer.add_tokens(new_tokens)
 
   ## load my model
   MODEL_NAME = conf.model.model_name
   model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  if conf.utils.isCustom:
-    model = CustomModel(conf, config=model_config)
+  if conf.custom_model==1:
+    model_config = AutoConfig.from_pretrained(args.model_dir)
+    model = CustomModel(conf.model.model_name, config=model_config)
+    model.load_state_dict(torch.load(os.path.join(MODEL_NAME, 'pytorch_model.bin')))
+  elif conf.custom_model==2:
+    model_config = AutoConfig.from_pretrained(args.model_dir)
+    model = CustomModel2(conf.model.model_name, config=model_config)
+    model.load_state_dict(torch.load(os.path.join(MODEL_NAME, 'pytorch_model.bin')))
+  elif conf.custom_model==3:
+    model = CustomModel3(conf, config=model_config)
     model.encoder.resize_token_embeddings(len(tokenizer))
     model.load_state_dict(torch.load(args.model_dir))
   else:
@@ -112,7 +124,7 @@ if __name__ == '__main__':
   Re_test_dataset = RE_Dataset(test_dataset ,test_label)
 
   ## predict answer
-  if conf.utils.isCustom:
+  if conf.custom_model > 0:
     pred_answer, output_prob = custom_inference(model, Re_test_dataset, device) # model에서 class 추론
   else:
     pred_answer, output_prob = base_inference(model, Re_test_dataset, device) # model에서 class 추론

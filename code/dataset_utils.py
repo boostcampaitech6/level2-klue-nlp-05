@@ -4,6 +4,12 @@ import pandas as pd
 import torch
 import ast
 
+from config.config import call_config
+from entity_token_adder import add_typed_entity_marker_punct
+from custom_tokenizer import Processor
+
+conf = call_config()
+
 def tokenized_dataset_entity(dataset, tokenizer):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   sentences = []
@@ -94,6 +100,30 @@ def tokenized_dataset_prompt(dataset, tokenizer):
       )
   return tokenized_sentences
 
+def tokenized_dataset_entity2(dataset, tokenizer):
+  """ tokenizer에 따라 sentence를 tokenizing 합니다."""
+  
+  if conf.use_entity_marker:
+    # use entity marker
+    concat_entity, dataset = add_typed_entity_marker_punct(dataset)
+  else:
+    concat_entity = []
+    for e01, e02 in zip(dataset['subject_word'], dataset['object_word']):
+      temp = ''
+      temp = e01 + '[SEP]' + e02
+      concat_entity.append(temp)
+      
+  tokenized_sentences = tokenizer(
+      concat_entity,
+      list(dataset['sentence']),
+      return_tensors="pt",
+      padding=True,
+      truncation=True,
+      max_length=256,
+      add_special_tokens=True,
+      )
+    
+  return tokenized_sentences
 
 def tokenized_dataset_xlm(dataset, tokenizer):
   """dataset을 주어진 tokenizer로 tokenize하는 함수(xlm only)
@@ -153,8 +183,10 @@ def load_test_dataset(dataset_dir, tokenizer, conf):
   else:
     tokenized_test = tokenized_dataset_prompt(test_dataset, tokenizer)
 
-  if conf.utils.isCustom:
+  if int(conf.custom_model) == 1:
     tokenized_test = tokenized_dataset_entity(test_dataset, tokenizer)
+  elif int(conf.custom_model) == 2:
+    tokenized_test = Processor(conf, tokenizer).read(test_dataset)
 
   return test_dataset['id'], tokenized_test, test_label
 

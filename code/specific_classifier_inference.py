@@ -4,7 +4,7 @@ from dataset_utils import load_test_dataset, num_to_label, num_to_label_binary
 from omegaconf import OmegaConf
 from general_classifier_train import set_seed
 from custom_datasets import RE_Dataset
-from model import CustomModel
+from custom_model import CustomModel3
 from tqdm import tqdm
 
 import torch.nn.functional as F
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     ## load my model
     BINARY_MODEL_NAME = './best_model/Binary'
     
-    binary_model = CustomModel.load_pretrained(BINARY_MODEL_NAME, conf,
+    binary_model = CustomModel3.load_pretrained(BINARY_MODEL_NAME, conf,
                                                config=AutoConfig.from_pretrained(conf.model.model_name))
     binary_model.encoder.resize_token_embeddings(len(tokenizer))
     binary_model.parameters
@@ -154,7 +154,7 @@ if __name__ == '__main__':
 
         for fold in range(conf.utils.stratifiedKFold):
             SPECIFIC_MODEL_NAME = f'./best_model/{pair}/{fold}_true_labels'
-            specific_model = CustomModel.load_pretrained(SPECIFIC_MODEL_NAME, conf,
+            specific_model = CustomModel3.load_pretrained(SPECIFIC_MODEL_NAME, conf,
                                                          config=AutoConfig.from_pretrained(conf.model.model_name))
             
             specific_model.encoder.resize_token_embeddings(len(tokenizer))
@@ -195,7 +195,7 @@ if __name__ == '__main__':
 
     for pair in exception_pair:
         GENERAL_MODEL_NAME = f'./best_model/General'
-        general_model = CustomModel.load_pretrained(GENERAL_MODEL_NAME, conf,
+        general_model = CustomModel3.load_pretrained(GENERAL_MODEL_NAME, conf,
                                                     config=AutoConfig.from_pretrained(conf.model.model_name))
         
         general_model.encoder.resize_token_embeddings(len(tokenizer))

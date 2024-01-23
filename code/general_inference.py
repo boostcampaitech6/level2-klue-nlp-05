@@ -5,7 +5,7 @@ from omegaconf import OmegaConf
 from general_classifier_train import set_seed
 from custom_datasets import RE_Dataset
 from tqdm import tqdm
-from model import CustomModel
+from custom_model import CustomModel3
 
 import torch.nn.functional as F
 import pandas as pd
@@ -70,9 +70,9 @@ if __name__ == '__main__':
   BINARY_MODEL_NAME = './best_model/Binary'
   GENERAL_MODEL_NAME = './best_model/General'
   
-  binary_model = CustomModel.load_pretrained(BINARY_MODEL_NAME, conf, 
+  binary_model = CustomModel3.load_pretrained(BINARY_MODEL_NAME, conf, 
                                              config=AutoConfig.from_pretrained(conf.model.model_name))
-  general_model = CustomModel.load_pretrained(GENERAL_MODEL_NAME, conf, 
+  general_model = CustomModel3.load_pretrained(GENERAL_MODEL_NAME, conf, 
                                              config=AutoConfig.from_pretrained(conf.model.model_name))
 
   binary_model.encoder.resize_token_embeddings(len(tokenizer))

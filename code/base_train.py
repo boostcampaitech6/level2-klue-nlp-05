@@ -14,6 +14,11 @@ import torch
 import wandb
 import os
 
+from config.config import call_config
+import torch.nn as nn
+import torch.nn.functional as F
+from custom_model import CustomModel, CustomModel2, CustomModel3
+from custom_tokenizer import Processor
 
 def set_seed(seed:int = 42):
     torch.manual_seed(seed)
@@ -66,8 +71,12 @@ if __name__ == '__main__':
     tokenized_train = tokenized_dataset_xlm(train_dataset, tokenizer)
     tokenized_dev = tokenized_dataset_xlm(dev_dataset, tokenizer)
   else:
-    tokenized_train = tokenized_dataset_prompt(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset_prompt(dev_dataset, tokenizer)
+    if int(conf.custom_model) > 0:
+      tokenized_train = Processor(conf, tokenizer).read(train_dataset, train=True)
+      tokenized_dev = Processor(conf, tokenizer).read(dev_dataset)
+    else:
+      tokenized_train = tokenized_dataset_prompt(train_dataset, tokenizer)
+      tokenized_dev = tokenized_dataset_prompt(dev_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -85,8 +94,17 @@ if __name__ == '__main__':
 
   def model_init():
     return AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
-
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  
+  if int(conf.custom_model)==1:
+    model = CustomModel(MODEL_NAME, config=model_config)
+  elif int(conf.custom_model)==2:
+    model = CustomModel2(MODEL_NAME, config=model_config)
+  elif int(conf.custom_model)==3:
+    model = CustomModel3(MODEL_NAME, config=model_config)
+  else:
+      model_config.num_labels = 30
+      model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+    
   print(model.config)
   model.parameters
   model.to(device)
@@ -124,7 +142,11 @@ if __name__ == '__main__':
       compute_metrics=compute_metrics
     )
     trainer.train()
-    model.save_pretrained('./best_model')
+    if conf.model.add_entity_token:
+      save_path = f"./model_save/{conf.model.model_name.replace('/', '_')}_Max-epoch:{conf.train.epochs}_Batch-size:{conf.train.batch_size}"
+      torch.save(model.state_dict(), save_path)
+    else:
+      model.save_pretrained('./best_model')
   elif args.train_type == "hp_search":
     trainer = CustomTrainer(
 	    model=None,
