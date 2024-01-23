@@ -43,7 +43,7 @@ def tokenized_dataset(dataset, tokenizer):
     object_start_idx, object_end_idx = row['object_start_idx'], row['object_end_idx']
     subject_type, object_type = row['subject_type'], row['object_type']
 
-    pair = subject_word + '-' + object_word
+    pair = subject_word + '과' + object_word +'의 관계'
 
     if subject_start_idx < object_start_idx:
       sentence = (sentence[:subject_start_idx] + 
