@@ -22,7 +22,7 @@ def extract_columns(df):
         object_end_idx.append(data['end_idx'])
         object_type.append(data['type'])
     df['object_word'], df['object_start_idx'], df['object_end_idx'], df['object_type'] = object_word, object_start_idx, object_end_idx, object_type
-    
+
     df.drop(columns=['subject_entity', 'object_entity'], inplace=True)
 
     return df
@@ -38,6 +38,8 @@ def data_cleaning(df):
 
 def data_augmentation(df):
     augmented_data = []
+    tokenizer = AutoTokenizer.from_pretrained('klue/roberta-large')
+    model = AutoModelForMaskedLM.from_pretrained('klue/roberta-large')
     
     for idx, row in df.iterrows():
         sentence = row['sentence']
@@ -49,8 +51,6 @@ def data_augmentation(df):
         else:
             masked_sentence = sentence[:object_start_idx] + '[MASK]' + sentence[object_end_idx+1:subject_start_idx] + '[MASK]' + sentence[subject_end_idx+1:]
 
-        tokenizer = AutoTokenizer.from_pretrained('klue/roberta-large')
-        model = AutoModelForMaskedLM.from_pretrained('klue/roberta-large')
         input_ids = tokenizer.encode(masked_sentence, return_tensors="pt")
 
         with torch.no_grad():
@@ -74,21 +74,22 @@ def data_augmentation(df):
             if subject_start_idx < object_start_idx:
                 row['subject_word'], row['object_word'] = predicted_tokens[0], predicted_tokens[1]
                 row['subject_start_idx'] = new_sentence.find(predicted_tokens[0])
-                row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[0])
+                row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[0]) - 1
                 row['object_start_idx'] = new_sentence.find(predicted_tokens[1], row['subject_end_idx']+1)
-                row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[1])
+                row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[1]) - 1
                 row['sentence'] = new_sentence
                 augmented_data.append(row)
             else:
                 row['object_word'], row['subject_word'] = predicted_tokens[0], predicted_tokens[1]
                 row['object_start_idx'] = new_sentence.find(predicted_tokens[0])
-                row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[0])
+                row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[0]) - 1
                 row['subject_start_idx'] = new_sentence.find(predicted_tokens[1], row['object_end_idx']+1)
-                row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[1])
+                row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[1]) - 1
                 row['sentence'] = new_sentence
                 augmented_data.append(row)
 
     df = pd.concat([df, pd.DataFrame(augmented_data)], ignore_index=True)
+    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
     df['id'] = df.index
 
     return df
