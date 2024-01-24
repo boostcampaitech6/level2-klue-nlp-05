@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  RE_dev_dataset = RE_Dataset(tokenized_validation, validation_label)
+  RE_validation_dataset = RE_Dataset(tokenized_validation, validation_label)
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     model=model,
     args=training_args,
     train_dataset=RE_train_dataset,
-    eval_dataset=RE_dev_dataset,
+    eval_dataset=RE_validation_dataset,
     compute_metrics=compute_metrics
   )
 

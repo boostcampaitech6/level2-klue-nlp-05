@@ -27,14 +27,14 @@ def model_init():
 def optuna_hp_space(trial):
     return {
         "learning_rate": trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True),
-        "warmup_steps": trial.suggest_int("warmup_steps", 0, 500),
-        "weight_decay": trial.suggest_float("weight_decay", 0.0, 0.3),
-        "seed": trial.suggest_categorical("seed", [42, 123, 2024])
+        "warmup_steps": trial.suggest_categorical("warmup_steps", [500, 600, 700, 800, 900, 1000]),
+        "weight_decay": trial.suggest_categorical("weight_decay", [0.0001, 0.001, 0.01, 0.1]),
+        "seed": trial.suggest_categorical("seed", [7, 42, 123, 2024])
     }
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("--config", "-c", type=str, default="search_config")
+  parser.add_argument("--config", "-c", type=str, default="base_config")
 
   args, _ = parser.parse_known_args()
   conf = OmegaConf.load(f"./config/{args.config}.yaml")
@@ -53,18 +53,18 @@ if __name__ == '__main__':
 
   # load dataset
   train_dataset = load_data(conf.path.train_path)
-  dev_dataset = load_data(conf.path.dev_path)
+  validation_dataset = load_data(conf.path.validation_path)
 
   train_label = label_to_num(train_dataset['label'].values)
-  dev_label = label_to_num(dev_dataset['label'].values)
+  validation_label = label_to_num(validation_dataset['label'].values)
 
   # tokenizing dataset
   tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-  tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+  tokenized_validation = tokenized_dataset(validation_dataset, tokenizer)
 
   # make dataset for pytorch.
   RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-  RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
+  RE_validation_dataset = RE_Dataset(tokenized_validation, validation_label)
 
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   
@@ -104,15 +104,13 @@ if __name__ == '__main__':
     model_init=model_init,
     args=training_args,
     train_dataset=RE_train_dataset,
-    eval_dataset=RE_dev_dataset,
+    eval_dataset=RE_validation_dataset,
     compute_metrics=compute_metrics
   )
 
-  best_trials = trainer.hyperparameter_search(n_trials=7, direction="maximize", backend="optuna", hp_space=optuna_hp_space)
+  best_trials = trainer.hyperparameter_search(n_trials=20, direction="maximize", backend="optuna", hp_space=optuna_hp_space)
 
   # train model
   trainer.train()
-#   save_path = f"./best_model/model.pt"
-#   torch.save(model.state_dict(), save_path)
   
   wandb.finish()

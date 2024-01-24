@@ -37,67 +37,69 @@ def data_cleaning(df):
 
     return df
 
-def data_augmentation(df):
-    augmented_data = []
-    tokenizer = AutoTokenizer.from_pretrained('klue/roberta-large')
-    model = AutoModelForMaskedLM.from_pretrained('klue/roberta-large')
-    
-    for idx, row in tqdm(df.iterrows(), total=df.shape[0]):
-        sentence = row['sentence']
-        subject_start_idx, object_start_idx = row['subject_start_idx'], row['object_start_idx']
-        subject_end_idx, object_end_idx = row['subject_end_idx'], row['object_end_idx']
+# def data_augmentation(df):
+#     augmented_data = []
+#     tokenizer = AutoTokenizer.from_pretrained('klue/roberta-large')
+#     model = AutoModelForMaskedLM.from_pretrained('klue/roberta-large')
+
+#     print("***** Running data augmentation *****")
+#     for idx, row in tqdm(df.iterrows(), total=df.shape[0]):
+#         sentence = row['sentence']
+#         subject_start_idx, object_start_idx = row['subject_start_idx'], row['object_start_idx']
+#         subject_end_idx, object_end_idx = row['subject_end_idx'], row['object_end_idx']
         
-        if subject_start_idx < object_start_idx:
-            masked_sentence = sentence[:subject_start_idx] + '[MASK]' + sentence[subject_end_idx+1:object_start_idx] + '[MASK]' + sentence[object_end_idx+1:]
-        else:
-            masked_sentence = sentence[:object_start_idx] + '[MASK]' + sentence[object_end_idx+1:subject_start_idx] + '[MASK]' + sentence[subject_end_idx+1:]
+#         if subject_start_idx < object_start_idx:
+#             masked_sentence = sentence[:subject_start_idx] + '[MASK]' + sentence[subject_end_idx+1:object_start_idx] + '[MASK]' + sentence[object_end_idx+1:]
+#         else:
+#             masked_sentence = sentence[:object_start_idx] + '[MASK]' + sentence[object_end_idx+1:subject_start_idx] + '[MASK]' + sentence[subject_end_idx+1:]
 
-        input_ids = tokenizer.encode(masked_sentence, return_tensors="pt")
+#         input_ids = tokenizer.encode(masked_sentence, return_tensors="pt")
 
-        with torch.no_grad():
-            outputs = model(input_ids)
-            predictions = outputs[0]
+#         with torch.no_grad():
+#             outputs = model(input_ids)
+#             predictions = outputs[0]
 
-        mask_indices = (input_ids == tokenizer.mask_token_id).nonzero(as_tuple=True)[1]
-        predicted_tokens = []
+#         mask_indices = (input_ids == tokenizer.mask_token_id).nonzero(as_tuple=True)[1]
+#         predicted_tokens = []
 
-        for mask_index in mask_indices:
-            predicted_index = torch.argmax(predictions[0, mask_index]).item()
-            predicted_token = tokenizer.convert_ids_to_tokens([predicted_index])[0]
-            predicted_tokens.append(predicted_token)
+#         for mask_index in mask_indices:
+#             predicted_index = torch.argmax(predictions[0, mask_index]).item()
+#             predicted_token = tokenizer.convert_ids_to_tokens([predicted_index])[0]
+#             predicted_tokens.append(predicted_token)
 
-        new_sentence = masked_sentence.replace("[MASK]", predicted_tokens[0], 1).replace("[MASK]", predicted_tokens[1], 1)
+#         new_sentence = masked_sentence.replace('[MASK]', predicted_tokens[0], 1).replace('[MASK]', predicted_tokens[1], 1)
         
-        if ('[PAD]' in new_sentence) or ('[UNK]' in new_sentence):
-            continue
-        else:
-            if subject_start_idx < object_start_idx:
-                row['subject_word'], row['object_word'] = predicted_tokens[0], predicted_tokens[1]
-                row['subject_start_idx'] = new_sentence.find(predicted_tokens[0])
-                row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[0]) - 1
-                row['object_start_idx'] = new_sentence.find(predicted_tokens[1], row['subject_end_idx']+1)
-                row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[1]) - 1
-                row['sentence'] = new_sentence
-                augmented_data.append(row)
-            else:
-                row['object_word'], row['subject_word'] = predicted_tokens[0], predicted_tokens[1]
-                row['object_start_idx'] = new_sentence.find(predicted_tokens[0])
-                row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[0]) - 1
-                row['subject_start_idx'] = new_sentence.find(predicted_tokens[1], row['object_end_idx']+1)
-                row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[1]) - 1
-                row['sentence'] = new_sentence
-                augmented_data.append(row)
+#         if ('[PAD]' in new_sentence) or ('[UNK]' in new_sentence):
+#             continue
+#         else:
+#             if subject_start_idx < object_start_idx:
+#                 row['subject_word'], row['object_word'] = predicted_tokens[0], predicted_tokens[1]
+#                 row['subject_start_idx'] = new_sentence.find(predicted_tokens[0])
+#                 row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[0]) - 1
+#                 row['object_start_idx'] = new_sentence.find(predicted_tokens[1], row['subject_end_idx']+1)
+#                 row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[1]) - 1
+#                 row['sentence'] = new_sentence
+#                 augmented_data.append(row)
+#             else:
+#                 row['object_word'], row['subject_word'] = predicted_tokens[0], predicted_tokens[1]
+#                 row['object_start_idx'] = new_sentence.find(predicted_tokens[0])
+#                 row['object_end_idx'] = row['object_start_idx'] + len(predicted_tokens[0]) - 1
+#                 row['subject_start_idx'] = new_sentence.find(predicted_tokens[1], row['object_end_idx']+1)
+#                 row['subject_end_idx'] = row['subject_start_idx'] + len(predicted_tokens[1]) - 1
+#                 row['sentence'] = new_sentence
+#                 augmented_data.append(row)
 
-    df = pd.concat([df, pd.DataFrame(augmented_data)], ignore_index=True)
-    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
-    df['id'] = df.index
+#     df = pd.concat([df, pd.DataFrame(augmented_data)], ignore_index=True)
+#     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+#     df['id'] = df.index
+#     print("Complete!")
 
-    return df
+#     return df
     
 train, validation, test = pd.read_csv("./train/train.csv"), pd.read_csv("./validation/validation.csv"), pd.read_csv("./test/test.csv")
 train, validation, test = extract_columns(train), extract_columns(validation), extract_columns(test)
 train = data_cleaning(train)
-train = data_augmentation(train)
+# train = data_augmentation(train)
 train.to_csv("./train/train_final.csv", index=False)
 validation.to_csv('./validation/validation_final.csv', index=False)
 test.to_csv("./test/test_final.csv", index=False)
